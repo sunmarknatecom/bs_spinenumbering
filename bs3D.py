@@ -8,18 +8,22 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
     ctPath is folder name
     nmPath is nm file name
+    notation: current array class(ex: list, dict, np), study class(ex: NM, CT),
+              data shape(ex: 3D, 2D), data class(ex: File, Img),
+              object class(ex: Objs, Path)
     '''
     #==============================================================================
     # CT manupulation
     print("CT files processing")
-    fileListCT = sorted(os.listdir(ctPath))
-    fileObjsCT = []
-    for fname in fileListCT:
-        print("loading: {}".format(fname))
-        fileObjsCT.append(pydicom.dcmread(ctPath + fname))
+    listCTFilePath = sorted(os.listdir(ctPath))
+    listCTFileObjs = []
+    for fname in listCTFilePath:
+        print("loading: {}".format(fname), end="\r")
+        listCTFileObjs.append(pydicom.dcmread(ctPath + fname))
+    print("Finished CT file processing")
     slicesCT = []
     skipCount = 0
-    for f in fileObjsCT:
+    for f in listCTFileObjs:
         if hasattr(f, 'SliceLocation'):
             slicesCT.append(f)
         else:
@@ -29,29 +33,38 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     # create 3D CT object 
     imgShapeCT = list(slicesCT[0].pixel_array.shape)
     imgShapeCT.append(len(slicesCT))
-    imgCT3D = np.zeros(imgShapeCT)
+    CT3DImgObj = np.zeros(imgShapeCT)
     np.shape(imgCT3D)
     dictLocCT = {}
     for i, s in enumerate(slicesCT):
         dictLocCT[i + 1] = float(s.SliceLocation)
     for i, s in enumerate(slicesCT):
-        imgCT2D = s.pixel_array
-        imgCT3D[:, :, i] = imgCT2D
+        CT2DImgObj = s.pixel_array
+        CT3DImgObj[:, :, i] = CT2DImgObj
+    # return data: 1. dictLocCT(slice index: location)
+    #              2. listCTFile path (absolute path of CT files)
+    #              3. listCTFile objects (metadata)
+    #              4. CT3DImg
     #==============================================================================
     # NM manupulation
     print("NM file processing")
-    fileObjNM = pydicom.dcmread(nmPath)
-    locationNM = float(fileObjNM["ImagePositionPatient"].value[2]) # location
-    imgNM3D = fileObjNM.pixel_array
-    #imgNM3D[imgNM3D>=300] = 300
-    imgNM3DTransposed = np.transpose(imgNM3D, (1, 2, 0))
+    NMFileObj = pydicom.dcmread(nmPath)
+    locationNM = float(NMFileObj["ImagePositionPatient"].value[2]) # location
+    NM3DImgObj = NMFileObj.pixel_array
+    # NM3DImgObj[imgNM3D>=300] = 300
+    NM3DImgObj_transposed = np.transpose(NM3DImgObj, (1, 2, 0))
     dictLocNM = {}
-    nmSliceThickness = float(fileObjNM.SliceThickness)
-    lenNM = np.shape(imgNM3DTransposed)[2]
+    nmSliceThickness = float(NMFileObj.SliceThickness)
+    lenNM = np.shape(NM3DImgObj_transposed)[2]
     for i in range(lenNM):
         dictLocNM[i + 1] = float(locationNM + i * nmSliceThickness)
+    # return data: 1. NMFileObj
+    #              2. NM3DImgObj (generally, h X w X slices)
+    #              3. NM3DImgObj_transposed (generally, slices X h X w)
+    #              4. dictLocNM (index: sliceLoction)
     #==============================================================================
     # search CT-NM start point
+    # dictionary keys를 list로 변환시 순서가 안 바뀐다는 가정
     print("NM Object slice start point searching")
     headValCT = next(iter(dictLocCT.values()))
     diffMin = float('inf')  # 초기값 설정
@@ -62,6 +75,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
             diffMin = diff
             keyDiffMin = key
     print("dictLocNM의 첫 번째 값과 차이가 가장 작은 dictLocNM value의 key:", keyDiffMin)
+    # return data: 1. headValCT = 
     #==============================================================================
     # rearranged NM slices.
     # modify the NM and CT objects to same slices.
