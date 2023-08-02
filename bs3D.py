@@ -487,6 +487,19 @@ def getRootPath():
         dictFolders[elem] = temp1DictFolders
     return dictFolders
 
+def inputList(a):
+    '''
+    a is a getsubfolders
+    '''
+    input_list = []
+    for elem in a:
+        for elem1 in a[elem]:
+            for elem2 in a[elem][elem1]:
+                NMpath = a[elem][elem1][elem2]["NM"]+"/"+os.listdir(a[elem][elem1][elem2]["NM"])[0]
+                input_list.append([a[elem][elem1][elem2]["CT"], NMpath])
+    return input_list
+
+
 def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM시작값                :",type(init_key), "   ", init_key)
     print("NM마지막 슬라이드번호   :",type(last_key), "  ",  last_key)
@@ -498,13 +511,6 @@ if __name__ == "__main__":
     a, b, c, d, e = ret_values_NM()
     # results(a, b, c, d, e)
     # print(a, b, c, d, e)
-    input_list = []
-    for elem in a:
-        for elem1 in a[elem]:
-            for elem2 in a[elem][elem1]:
-                NMpath = a[elem][elem1][elem2]["NM"]+"/"+os.listdir(a[elem][elem1][elem2]["NM"])[0]
-                input_list.append([a[elem][elem1][elem2]["CT"], NMpath])
-
     errors = []
     def trying(input_list):
         try:
