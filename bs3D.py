@@ -508,7 +508,7 @@ def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("삭제될 NM 슬라이드번호들 ",type(skipped_dict), " ",  skipped_dict)
 
 if __name__ == "__main__":
-    a, b, c, d, e = ret_values_NM()
+    # a, b, c, d, e = ret_values_NM()
     # results(a, b, c, d, e)
     # print(a, b, c, d, e)
     errors = []
