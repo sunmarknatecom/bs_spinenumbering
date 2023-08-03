@@ -512,6 +512,8 @@ if __name__ == "__main__":
     # results(a, b, c, d, e)
     # print(a, b, c, d, e)
     errors = []
+    inputPath = getSubFolders()
+    input_list = inputList(inputPath)
     def trying(input_list):
         try:
             for ctpath, nmpath in input_list:
