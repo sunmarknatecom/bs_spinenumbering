@@ -87,6 +87,9 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
             newDictLocNM[key] = value
         if key == (keyDiffMin-1):
             found_min_key = True
+
+    if found_min_key == False:
+        newDictLocNM = copy.copy(dictLocNM)
     #작동원리: key:1, value: 255이면, keyDiffMin가 77일때,
     # found_min_key가 false이므로 그냥 돌다가 76에서 found_min_key로 바뀌면 입력시작
     # print("새로운 Dictionary:", newDictLocNM)
