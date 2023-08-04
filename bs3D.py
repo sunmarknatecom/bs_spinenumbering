@@ -1,6 +1,7 @@
 import os
 import pydicom
 import numpy as np
+import copy
 
 def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
@@ -18,6 +19,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     for fname in listCTFilePath:
         print("loading: {}".format(fname), end="\r")
         listCTFileObjs.append(pydicom.dcmread(ctPath + fname))
+
     # print("Finished CT file processing")
     slicesCT = []
     skipCount = 0
@@ -26,6 +28,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
             slicesCT.append(f)
         else:
             skipCount += 1
+
     # print("skipped, no SliceLocation: {}".format(skipCount))
     slicesCT = sorted(slicesCT, key=lambda s: s.SliceLocation)
     # create 3D CT object 
@@ -36,6 +39,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     dictLocCT = {}
     for i, s in enumerate(slicesCT):
         dictLocCT[i + 1] = float(s.SliceLocation)
+
     # for i, s in enumerate(slicesCT):
     #     CT2DImgObj = s.pixel_array
     #     CT3DImgObj[:, :, i] = CT2DImgObj
@@ -56,6 +60,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     lenNM = np.shape(NM3DImgObj_transposed)[2]
     for i in range(lenNM):
         dictLocNM[i + 1] = float(locationNM + i * nmSliceThickness)
+
     # return data: 1. NMFileObj
     #              2. NM3DImgObj (generally, h X w X slices)
     #              3. NM3DImgObj_transposed (generally, slices X h X w)
@@ -72,6 +77,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
         if diff < diffMin:
             diffMin = diff
             keyDiffMin = key
+
     # print("dictLocNM의 첫 번째 값과 차이가 가장 작은 dictLocNM value의 key:", keyDiffMin)
     # return data: 1. headValCT = first value of CT slices
     #              2. diffMin = minimum value of diff between CT and NM
@@ -88,8 +94,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
         if key == (keyDiffMin-1):
             found_min_key = True
 
-    if found_min_key == False:
-        newDictLocNM = copy.copy(dictLocNM)
     #작동원리: key:1, value: 255이면, keyDiffMin가 77일때,
     # found_min_key가 false이므로 그냥 돌다가 76에서 found_min_key로 바뀌면 입력시작
     # print("새로운 Dictionary:", newDictLocNM)
@@ -106,18 +110,25 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     #     for i in range(newDictLocNM_length+1, max_length+1):
     #         newDictLocNM[i] = None
     #==============================================================================
+    if found_min_key == False:
+        newDictLocNM = copy.copy(dictLocNM)
+
+    #==============================================================================
+    #==============================================================================
     # define the function to eliminate the slices of NM not to eqaulize slice location of CT
     skippedLocNM = {}
     keys_to_remove = []
-    prev_key_CT = None
+    prev_key_CT = 1
     prev_key_NM = None
     for key_CT, value_CT in dictLocCT.items():
         if prev_key_NM is not None and key_CT - prev_key_CT > 1:
             prev_key_NM = None
+            # print("1st if", key_CT, prev_key_NM, key_NM)
         if prev_key_NM is None:
             for key_NM, value_NM in newDictLocNM.items():
                 if abs(value_CT-value_NM) <= 1.23:
                     prev_key_NM = key_NM
+                    # print("2nd if", key_CT, prev_key_NM, key_NM)
                     break
         if prev_key_NM is not None:
             while prev_key_NM in newDictLocNM:
@@ -126,8 +137,10 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
                     skippedLocNM[prev_key_NM] = newDictLocNM[prev_key_NM]
                     keys_to_remove.append(prev_key_NM)
                     prev_key_NM += 1
+                    # print("3rd if", key_CT, prev_key_NM, key_NM, "diff: ", value_CT-value_NM)
                 else:
                     prev_key_NM += 1
+                    # print("4th if ", key_CT, prev_key_NM, key_NM)
                     break
         prev_key_CT = key_CT
     for elem in keys_to_remove:
@@ -514,13 +527,9 @@ if __name__ == "__main__":
     # a, b, c, d, e = ret_values_NM()
     # results(a, b, c, d, e)
     # print(a, b, c, d, e)
-    errors = []
     inputPath = getSubFolders()
     input_list = inputList(inputPath)
-    def trying(input_list):
-        try:
-            for ctpath, nmpath in input_list:
-                A, B, C, D, E = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
-                print(A, B, C, D, E)
-        except IndexError:
-            errors.append(ctpath)
+    errors = []
+    for ctpath, nmpath in input_list:
+        A, B, C, D, E = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
+        print(A, B, C, D, E)
