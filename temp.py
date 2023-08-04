@@ -3,8 +3,8 @@ import pydicom
 import numpy as np
 import copy
 
-ctPath="./data/ct/"
-nmPath="./data/nm/nm.dcm"
+# ctPath="./data/ct/"
+# nmPath="./data/nm/nm.dcm"
 '''
 ctPath is folder name
 nmPath is nm file name
@@ -15,10 +15,10 @@ notation: current array class(ex: list, dict, np), study class(ex: NM, CT),
 #==============================================================================
 # CT manupulation
 # print("CT files processing")
-# ctPath="D:/BONESPECT/data/2306/230602/23060201/23060201_ANON77424_CT_2023-06-02_154452_Other_Bone_n715__00000/"
-# nmPath="D:/BONESPECT/data/2306/230602/23060201/23060201_ANON77424_NM_2023-06-02_154128_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.TA_n758__00000/2.16.840.1.114362.1.12122241.23963427765.647525879.1008.9760.dcm"
-ctPath = "D:/BONESPECT/data/2306/230601/23060101/23060101_ANON58452_CT_2023-06-01_162545_Other_Bone_n668__00000/"
-nmPath = "D:/BONESPECT/data/2306/230601/23060101/23060101_ANON58452_NM_2023-06-01_162407_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.TA_n758__00000/2.16.840.1.114362.1.12122241.23963427765.647526826.820.2644.dcm"
+ctPath="D:/BONESPECT/data/2306/230602/23060201/23060201_ANON77424_CT_2023-06-02_154452_Other_Bone_n715__00000/"
+nmPath="D:/BONESPECT/data/2306/230602/23060201/23060201_ANON77424_NM_2023-06-02_154128_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.TA_n758__00000/2.16.840.1.114362.1.12122241.23963427765.647525879.1008.9760.dcm"
+# ctPath = "D:/BONESPECT/data/2306/230601/23060101/23060101_ANON58452_CT_2023-06-01_162545_Other_Bone_n668__00000/"
+# nmPath = "D:/BONESPECT/data/2306/230601/23060101/23060101_ANON58452_NM_2023-06-01_162407_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.TA_n758__00000/2.16.840.1.114362.1.12122241.23963427765.647526826.820.2644.dcm"
 listCTFilePath = sorted(os.listdir(ctPath))
 listCTFileObjs = []
 for fname in listCTFilePath:
@@ -125,15 +125,16 @@ skippedLocNM = {}
 keys_to_remove = []
 prev_key_CT = 1
 prev_key_NM = None
+
 for key_CT, value_CT in dictLocCT.items():
     if prev_key_NM is not None and key_CT - prev_key_CT > 1:
         prev_key_NM = None
-        print("1st if", key_CT, prev_key_NM, key_NM)
+        # print("1st if", key_CT, prev_key_NM, key_NM)
     if prev_key_NM is None:
         for key_NM, value_NM in newDictLocNM.items():
             if abs(value_CT-value_NM) <= 1.23:
                 prev_key_NM = key_NM
-                print("2nd if", key_CT, prev_key_NM, key_NM)
+                # print("2nd if", key_CT, prev_key_NM, key_NM)
                 break
     if prev_key_NM is not None:
         while prev_key_NM in newDictLocNM:
@@ -142,10 +143,10 @@ for key_CT, value_CT in dictLocCT.items():
                 skippedLocNM[prev_key_NM] = newDictLocNM[prev_key_NM]
                 keys_to_remove.append(prev_key_NM)
                 prev_key_NM += 1
-                print("3rd if", key_CT, prev_key_NM, key_NM)
+                # print("3rd if", key_CT, prev_key_NM, key_NM, "diff: ", value_CT-value_NM)
             else:
                 prev_key_NM += 1
-                print("4th if ", key_CT, prev_key_NM, key_NM)
+                # print("4th if ", key_CT, prev_key_NM, key_NM)
                 break
     prev_key_CT = key_CT
 
