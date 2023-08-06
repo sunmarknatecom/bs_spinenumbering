@@ -19,7 +19,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     for fname in listCTFilePath:
         print("loading: {}".format(fname), end="\r")
         listCTFileObjs.append(pydicom.dcmread(ctPath + fname))
-
     # print("Finished CT file processing")
     slicesCT = []
     skipCount = 0
@@ -28,7 +27,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
             slicesCT.append(f)
         else:
             skipCount += 1
-
     # print("skipped, no SliceLocation: {}".format(skipCount))
     slicesCT = sorted(slicesCT, key=lambda s: s.SliceLocation)
     # create 3D CT object 
@@ -39,7 +37,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     dictLocCT = {}
     for i, s in enumerate(slicesCT):
         dictLocCT[i + 1] = float(s.SliceLocation)
-
     # for i, s in enumerate(slicesCT):
     #     CT2DImgObj = s.pixel_array
     #     CT3DImgObj[:, :, i] = CT2DImgObj
@@ -60,7 +57,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     lenNM = np.shape(NM3DImgObj_transposed)[2]
     for i in range(lenNM):
         dictLocNM[i + 1] = float(locationNM + i * nmSliceThickness)
-
     # return data: 1. NMFileObj
     #              2. NM3DImgObj (generally, h X w X slices)
     #              3. NM3DImgObj_transposed (generally, slices X h X w)
@@ -77,7 +73,6 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
         if diff < diffMin:
             diffMin = diff
             keyDiffMin = key
-
     # print("dictLocNM의 첫 번째 값과 차이가 가장 작은 dictLocNM value의 key:", keyDiffMin)
     # return data: 1. headValCT = first value of CT slices
     #              2. diffMin = minimum value of diff between CT and NM
@@ -88,12 +83,14 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     # print("Modify slices of NM and CT objects")
     newDictLocNM = {}
     found_min_key = False
-    for key, value in dictLocNM.items():
-        if found_min_key:
-            newDictLocNM[key] = value
-        if key == (keyDiffMin-1):
-            found_min_key = True
-
+    if keyDiffMin != 1:
+        for key, value in dictLocNM.items():
+            if found_min_key:
+                newDictLocNM[key] = value
+            if key == (keyDiffMin-1):
+                found_min_key = True
+    else:
+        newDictLocNM = copy.copy(dictLocNM)
     #작동원리: key:1, value: 255이면, keyDiffMin가 77일때,
     # found_min_key가 false이므로 그냥 돌다가 76에서 found_min_key로 바뀌면 입력시작
     # print("새로운 Dictionary:", newDictLocNM)
@@ -110,39 +107,27 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     #     for i in range(newDictLocNM_length+1, max_length+1):
     #         newDictLocNM[i] = None
     #==============================================================================
-    if found_min_key == False:
-        newDictLocNM = copy.copy(dictLocNM)
-
-    #==============================================================================
-    #==============================================================================
     # define the function to eliminate the slices of NM not to eqaulize slice location of CT
     skippedLocNM = {}
+    len_CT = len(dictLocCT)
+    len_NM = list(newDictLocNM.keys())[-1]
+    count_CT = 1
+    count_NM = list(newDictLocNM.keys())[0]
     keys_to_remove = []
-    prev_key_CT = 1
-    prev_key_NM = None
-    for key_CT, value_CT in dictLocCT.items():
-        if prev_key_NM is not None and key_CT - prev_key_CT > 1:
-            prev_key_NM = None
-            # print("1st if", key_CT, prev_key_NM, key_NM)
-        if prev_key_NM is None:
-            for key_NM, value_NM in newDictLocNM.items():
-                if abs(value_CT-value_NM) <= 1.23:
-                    prev_key_NM = key_NM
-                    # print("2nd if", key_CT, prev_key_NM, key_NM)
-                    break
-        if prev_key_NM is not None:
-            while prev_key_NM in newDictLocNM:
-                value_NM = newDictLocNM[prev_key_NM]
-                if abs(value_CT-value_NM) > 1.23:
-                    skippedLocNM[prev_key_NM] = newDictLocNM[prev_key_NM]
-                    keys_to_remove.append(prev_key_NM)
-                    prev_key_NM += 1
-                    # print("3rd if", key_CT, prev_key_NM, key_NM, "diff: ", value_CT-value_NM)
-                else:
-                    prev_key_NM += 1
-                    # print("4th if ", key_CT, prev_key_NM, key_NM)
-                    break
-        prev_key_CT = key_CT
+    step_count = 0
+    while (count_CT <= len_CT) and (count_NM <= len_NM):
+        diff = dictLocCT[count_CT]-newDictLocNM[count_NM]
+        if diff >= 1.23:
+            keys_to_remove.append(count_NM)
+            skippedLocNM[count_NM]=newDictLocNM[count_NM]
+            count_NM +=1
+            step_count +=1
+            # print("step2",dictLocCT[count_CT]-newDictLocNM[count_NM], diff, count_CT, count_NM)
+        else:
+            count_CT += 1
+            count_NM += 1
+            step_count +=1
+            # print("step1",dictLocCT[count_CT]-newDictLocNM[count_NM], diff, count_CT, count_NM)
     for elem in keys_to_remove:
         del newDictLocNM[elem]
     print(keyDiffMin, list(newDictLocNM.keys())[-1], len(dictLocCT) , len(newDictLocNM), list(skippedLocNM.keys()))
@@ -279,6 +264,7 @@ def legacyFunction(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     # rearranged NM slices.
     # modify the NM and CT objects to same slices.
     print("Modify slices of NM and CT objects")
+
     newDictLocNM = {}
     found_min_key = False
     for key, value in dictLocNM.items():
@@ -303,6 +289,9 @@ def legacyFunction(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     #         newDictLocNM[i] = None
     #==============================================================================
     # define the function to eliminate the slices of NM not to eqaulize slice location of CT
+    if found_min_key == False:
+        newDictLocNM = copy.copy(dictLocNM)
+    
     skippedLocNM = {}
     keys_to_remove = []
     prev_key_CT = None
@@ -512,7 +501,8 @@ def inputList(a):
         for elem1 in a[elem]:
             for elem2 in a[elem][elem1]:
                 NMpath = a[elem][elem1][elem2]["NM"]+"/"+os.listdir(a[elem][elem1][elem2]["NM"])[0]
-                input_list.append([a[elem][elem1][elem2]["CT"], NMpath])
+                mvppath = a[elem][elem1][elem2]["MVP"]+"/"+os.listdir(a[elem][elem1][elem2]["MVP"])[0]
+                input_list.append([a[elem][elem1][elem2]["CT"], NMpath, mvppath])
     return input_list
 
 
@@ -523,13 +513,37 @@ def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM 슬라이스 갯수        :",type(len_NM), "  ",  len_NM)
     print("삭제될 NM 슬라이드번호들 ",type(skipped_dict), " ",  skipped_dict)
 
+def mvpImgMan(path):
+    fObj = pydicom.dcmread(path)
+    fArr = fObj.pixel_array
+    print(np.shape(fArr))
+    return fArr[1]
+
+def slicesToRemove(ctpath, nmpath):
+    initNum, tNumNM, tNumCT, endNumNM, keysToRemove = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
+    slices_to_remove = []
+    prePartList = list(range(1, initNum))
+    preDeleteNums = prePartList + keysToRemove
+    tempSlicesToRemove = tNumNM - len(preDeleteNums)
+    diffNum = tNumCT - tempSlicesToRemove
+    tailDeleteNums = list(range(tNumNM-diffNum+1,tNumNM+1))
+    slices_to_remove = preDeleteNums + tailDeleteNums
+    idxSTR = (np.array(slices_to_remove) - tNumNM)*(-1) #STR = slices_to_remove
+    return idxSTR
+
+
 if __name__ == "__main__":
     # a, b, c, d, e = ret_values_NM()
     # results(a, b, c, d, e)
     # print(a, b, c, d, e)
+    errors = []
     inputPath = getSubFolders()
     input_list = inputList(inputPath)
-    errors = []
-    for ctpath, nmpath in input_list:
-        A, B, C, D, E = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
-        print(A, B, C, D, E)
+    # def trying(input_list):
+    #     try:
+    #         for ctpath, nmpath,_ in input_list:
+    #             A, B, C, D, E = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
+    #     except IndexError:
+    #         errors.append(ctpath)
+    for ctp, nmp, _ in input_list:
+        print(slicesToRemove(ctp, nmp))
