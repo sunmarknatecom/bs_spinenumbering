@@ -529,7 +529,8 @@ def slicesToRemove(ctpath, nmpath):
     tailDeleteNums = list(range(tNumNM-diffNum+1,tNumNM+1))
     slices_to_remove = preDeleteNums + tailDeleteNums
     idxSTR = (np.array(slices_to_remove) - tNumNM)*(-1) #STR = slices_to_remove
-    return idxSTR
+    temp_len = tNumNM-len(idxSTR)
+    return temp_len, idxSTR
 
 
 if __name__ == "__main__":
@@ -547,4 +548,4 @@ if __name__ == "__main__":
     #         errors.append(ctpath)
     for ctp, nmp, _ in input_list:
         result = slicesToRemove(ctp, nmp)
-        print(nmp-len(result), result)
+        print(len(result), result)
