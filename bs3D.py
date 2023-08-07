@@ -546,4 +546,5 @@ if __name__ == "__main__":
     #     except IndexError:
     #         errors.append(ctpath)
     for ctp, nmp, _ in input_list:
-        print(slicesToRemove(ctp, nmp))
+        result = slicesToRemove(ctp, nmp)
+        print(len(result), result)
