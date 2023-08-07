@@ -526,7 +526,7 @@ def slicesToRemove(ctpath, nmpath):
     preDeleteNums = prePartList + keysToRemove
     tempSlicesToRemove = tNumNM - len(preDeleteNums)
     diffNum = tNumCT - tempSlicesToRemove
-    tailDeleteNums = list(range(tNumNM-diffNum+1,tNumNM+1))
+    tailDeleteNums = list(range(tNumCT-diffNum+1,tNumCT+1))
     slices_to_remove = preDeleteNums + tailDeleteNums
     idxSTR = (np.array(slices_to_remove) - tNumNM)*(-1) #STR = slices_to_remove
     temp_len = tNumNM-len(idxSTR)
