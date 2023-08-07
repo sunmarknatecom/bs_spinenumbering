@@ -17,7 +17,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     listCTFilePath = sorted(os.listdir(ctPath))
     listCTFileObjs = []
     for fname in listCTFilePath:
-        print("loading: {}".format(fname), end="\r")
+        # print("loading: {}".format(fname), end="\r")
         listCTFileObjs.append(pydicom.dcmread(ctPath + fname))
     # print("Finished CT file processing")
     slicesCT = []
@@ -130,7 +130,7 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
             # print("step1",dictLocCT[count_CT]-newDictLocNM[count_NM], diff, count_CT, count_NM)
     for elem in keys_to_remove:
         del newDictLocNM[elem]
-    print(keyDiffMin, list(newDictLocNM.keys())[-1], len(dictLocCT) , len(newDictLocNM), list(skippedLocNM.keys()))
+    # print(" init No: ", keyDiffMin, ", NM len: ", list(newDictLocNM.keys())[-1], ", CT len: ", len(dictLocCT) , ", Re NM len: ", len(newDictLocNM), list(skippedLocNM.keys()))
     return keyDiffMin, list(newDictLocNM.keys())[-1], len(dictLocCT) , len(newDictLocNM), list(skippedLocNM.keys())
     # 반환값 : (NM의 초기키값), (삭제될 NM key, value), (삭제된 NM 마지막 키값), (CT 길이), (NM길이)
 
@@ -185,142 +185,6 @@ def NM3DObj(nmPath="./data/nm/nm.dcm"):
     # NM3DImgObj[imgNM3D>=300] = 300
     NM3DImgObj_transposed = np.transpose(NM3DImgObj, (1, 2, 0))
     return NM3DImgObj_transposed
-
-def legacyFunction(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
-    '''
-    ctPath is folder name
-    nmPath is nm file name
-    notation: current array class(ex: list, dict, np), study class(ex: NM, CT),
-              data shape(ex: 3D, 2D), data class(ex: File, Img),
-              object class(ex: Objs, Path)
-    '''
-    #==============================================================================
-    # CT manupulation
-    print("CT files processing")
-    listCTFilePath = sorted(os.listdir(ctPath))
-    listCTFileObjs = []
-    for fname in listCTFilePath:
-        print("loading: {}".format(fname), end="\r")
-        listCTFileObjs.append(pydicom.dcmread(ctPath + fname))
-    print("Finished CT file processing")
-    slicesCT = []
-    skipCount = 0
-    for f in listCTFileObjs:
-        if hasattr(f, 'SliceLocation'):
-            slicesCT.append(f)
-        else:
-            skipCount += 1
-    print("skipped, no SliceLocation: {}".format(skipCount))
-    slicesCT = sorted(slicesCT, key=lambda s: s.SliceLocation)
-    # create 3D CT object 
-    imgShapeCT = list(slicesCT[0].pixel_array.shape)
-    imgShapeCT.append(len(slicesCT))
-    CT3DImgObj = np.zeros(imgShapeCT)
-    # np.shape(CT3DImgObj)
-    dictLocCT = {}
-    for i, s in enumerate(slicesCT):
-        dictLocCT[i + 1] = float(s.SliceLocation)
-    for i, s in enumerate(slicesCT):
-        CT2DImgObj = s.pixel_array
-        CT3DImgObj[:, :, i] = CT2DImgObj
-    # return data: 1. dictLocCT(slice index: location)
-    #              2. listCTFile path (absolute path of CT files)
-    #              3. listCTFile objects (metadata)
-    #              4. CT3DImg
-    #==============================================================================
-    # NM manupulation
-    print("NM file processing")
-    NMFileObj = pydicom.dcmread(nmPath)
-    locationNM = float(NMFileObj["ImagePositionPatient"].value[2]) # location
-    NM3DImgObj = NMFileObj.pixel_array
-    # NM3DImgObj[imgNM3D>=300] = 300
-    NM3DImgObj_transposed = np.transpose(NM3DImgObj, (1, 2, 0))
-    dictLocNM = {}
-    nmSliceThickness = float(NMFileObj.SliceThickness)
-    lenNM = np.shape(NM3DImgObj_transposed)[2]
-    for i in range(lenNM):
-        dictLocNM[i + 1] = float(locationNM + i * nmSliceThickness)
-    # return data: 1. NMFileObj
-    #              2. NM3DImgObj (generally, h X w X slices)
-    #              3. NM3DImgObj_transposed (generally, slices X h X w)
-    #              4. dictLocNM (index: sliceLoction)
-    #==============================================================================
-    # search CT-NM start point
-    # dictionary keys를 list로 변환시 순서가 안 바뀐다는 가정
-    print("NM Object slice start point searching")
-    headValCT = next(iter(dictLocCT.values()))
-    diffMin = float('inf')  # 초기값 설정
-    keyDiffMin = None
-    for key, value in dictLocNM.items():
-        diff = abs(headValCT - value)
-        if diff < diffMin:
-            diffMin = diff
-            keyDiffMin = key
-    print("dictLocNM의 첫 번째 값과 차이가 가장 작은 dictLocNM value의 key:", keyDiffMin)
-    # return data: 1. headValCT = first value of CT slices
-    #              2. diffMin = minimum value of diff between CT and NM
-    #              3. keyDiffMin = key of minimum value of diff between CT and NM
-    #==============================================================================
-    # rearranged NM slices.
-    # modify the NM and CT objects to same slices.
-    print("Modify slices of NM and CT objects")
-
-    newDictLocNM = {}
-    found_min_key = False
-    for key, value in dictLocNM.items():
-        if found_min_key:
-            newDictLocNM[key] = value
-        if key == (keyDiffMin-1):
-            found_min_key = True
-    #작동원리: key:1, value: 255이면, keyDiffMin가 77일때,
-    # found_min_key가 false이므로 그냥 돌다가 76에서 found_min_key로 바뀌면 입력시작
-    # print("새로운 Dictionary:", newDictLocNM)
-    # dictLocCT_length = len(dictLocCT)
-    # newDictLocNM_length = len(newDictLocNM)
-    # max_length = max(dictLocCT_length, newDictLocNM_length)
-    # min_length = min(dictLocCT_length, newDictLocNM_length)
-    # if dictLocCT_length < max_length:
-    #     for i in range(dictLocCT_length+1, max_length+1):
-    #         dictLocCT[i] = None
-    # elif dictLocCT_length == max_length:
-    #     pass
-    # else:
-    #     for i in range(newDictLocNM_length+1, max_length+1):
-    #         newDictLocNM[i] = None
-    #==============================================================================
-    # define the function to eliminate the slices of NM not to eqaulize slice location of CT
-    if found_min_key == False:
-        newDictLocNM = copy.copy(dictLocNM)
-    
-    skippedLocNM = {}
-    keys_to_remove = []
-    prev_key_CT = None
-    prev_key_NM = None
-    for key_CT, value_CT in dictLocCT.items():
-        if prev_key_NM is not None and key_CT - prev_key_CT > 1:
-            prev_key_NM = None
-        if prev_key_NM is None:
-            for key_NM, value_NM in newDictLocNM.items():
-                if abs(value_CT-value_NM) <= 1.23:
-                    prev_key_NM = key_NM
-                    break
-        if prev_key_NM is not None:
-            while prev_key_NM in newDictLocNM:
-                value_NM = newDictLocNM[prev_key_NM]
-                if abs(value_CT-value_NM) > 1.23:
-                    skippedLocNM[prev_key_NM] = newDictLocNM[prev_key_NM]
-                    keys_to_remove.append(prev_key_NM)
-                    prev_key_NM += 1
-                else:
-                    prev_key_NM += 1
-                    break
-        prev_key_CT = key_CT
-
-    for elem in keys_to_remove:
-        del newDictLocNM[elem]
-    
-    return keyDiffMin, list(newDictLocNM.keys())[-1], len(dictLocCT) , len(newDictLocNM), list(skippedLocNM.keys())
-    # 반환값 : (NM의 초기키값), (삭제될 NM key, value), (삭제된 NM 마지막 키값), (CT 길이), (NM길이)
 
 def getFolders(option=False):
     '''
@@ -513,24 +377,64 @@ def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM 슬라이스 갯수        :",type(len_NM), "  ",  len_NM)
     print("삭제될 NM 슬라이드번호들 ",type(skipped_dict), " ",  skipped_dict)
 
-def mvpImgMan(path):
-    fObj = pydicom.dcmread(path)
-    fArr = fObj.pixel_array
-    print(np.shape(fArr))
-    return fArr[1]
+def mvpImgProc(ip=None, delSlices=None, needToApp=False, appNum=0, op=None):
+    '''
+    ip = input path of mvp
+    delSlices = slice location list to delete
+    op = output path of mvp, save file format is numpy
+    output path = one folder (ex: /data/result/inputData/)
+    '''
+    fObj = pydicom.dcmread(ip)
+    fArr = fObj.pixel_array[1]
+    fn = "./result/inputData/"+(os.path.split(ip))[0].split('/')[-2]
+    if needToApp == False:
+        saveNpy = np.delete(fArr,delSlices,axis=0)
+    else:
+        tempNpy = np.delete(fArr,delSlices,axis=0)
+        zeroArr = np.zeros((appNum, 256))
+        saveNpy = np.vstack([zeroArr,tempNpy])
+    np.savez_compressed(fn, saveNpy)
+    # print(np.shape(fArr))
+    
 
 def slicesToRemove(ctpath, nmpath):
+    # slice NO
     initNum, tNumNM, tNumCT, endNumNM, keysToRemove = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
+    # slice NO
     slices_to_remove = []
-    prePartList = list(range(1, initNum))
+    if initNum == 1:
+        prePartList = []
+    else:
+        prePartList = list(range(1, initNum))
     preDeleteNums = prePartList + keysToRemove
-    tempSlicesToRemove = tNumNM - len(preDeleteNums)
-    diffNum = tNumCT - tempSlicesToRemove
-    tailDeleteNums = list(range(tNumCT-diffNum+1,tNumCT+1))
-    slices_to_remove = preDeleteNums + tailDeleteNums
-    idxSTR = (np.array(slices_to_remove) - tNumNM)*(-1) #STR = slices_to_remove
+    tempLengthRemainingNM = tNumNM - len(preDeleteNums)
+    needToAppend = False
+    deficitNum = 0
+    if tNumCT < tempLengthRemainingNM:
+        diffNum = tempLengthRemainingNM - tNumCT
+        tailInitNum = tNumNM-diffNum+1
+        tailDeleteNums = list(range(tailInitNum,tNumNM+1))
+        if preDeleteNums[-1] in tailDeleteNums:
+            slices_to_remove = preDeleteNums + tailDeleteNums[1:]
+            idxSTR = (np.array(slices_to_remove) - tNumNM -1)*(-1) #STR = slices_to_remove
+            # print("CT < tempNM incl -1")
+        else:
+            slices_to_remove = preDeleteNums + tailDeleteNums
+            idxSTR = (np.array(slices_to_remove) - tNumNM -1)*(-1) #STR = slices_to_remove
+            # print("CT < tempNM not incl")
+    elif tNumCT == tempLengthRemainingNM:
+        slices_to_remove = preDeleteNums
+        idxSTR = (np.array(slices_to_remove) - tNumNM -1)*(-1) #STR = slices_to_remove
+        # print("CT == NM")
+    else:
+        slices_to_remove = preDeleteNums
+        idxSTR = (np.array(slices_to_remove) - tNumNM -1)*(-1) #STR = slices_to_remove
+        needToAppend = True
+        deficitNum = tNumCT - tNumNM + len(idxSTR)
+        # print("CT > tempNM")
     temp_len = tNumNM-len(idxSTR)
-    return temp_len, idxSTR
+    outListSTR = list(idxSTR - 1)
+    return temp_len, outListSTR, needToAppend, deficitNum, tNumCT
 
 
 if __name__ == "__main__":
@@ -546,6 +450,8 @@ if __name__ == "__main__":
     #             A, B, C, D, E = ret_values_NM(ctPath=ctpath, nmPath=nmpath)
     #     except IndexError:
     #         errors.append(ctpath)
-    for ctp, nmp, _ in input_list:
-        result = slicesToRemove(ctp, nmp)
-        print(result)
+    for i, (ctp, nmp, mvp) in enumerate(input_list):
+        result_len, listIdxSTR, reqAppend, defitNum, totalNumCT = slicesToRemove(ctp, nmp)
+        # print((result_len+defitNum) == totalNumCT, result_len, (os.path.split(mvp))[0].split('/')[-2])
+        # print("%4d"%i, "", (result_len+defitNum) == totalNumCT, result_len, ctp)
+        mvpImgProc(ip=mvp, delSlices=listIdxSTR,needToApp=reqAppend,appNum=defitNum)
