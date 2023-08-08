@@ -2,6 +2,7 @@ import os
 import pydicom
 import numpy as np
 import copy
+import nibabel as nib
 
 def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
@@ -436,6 +437,90 @@ def slicesToRemove(ctpath, nmpath):
     outListSTR = list(idxSTR - 1)
     return temp_len, outListSTR, needToAppend, deficitNum, tNumCT
 
+def segProcess(inputPath):
+    fObj = nib.load(inputPath)
+    arrObj = fObj.get_fdata()
+    pass
+
+def rangeFilter_not_to(inputArr, n1, n2):
+    imgArr = np.array(inputArr, dtype=np.uint8)
+    zeroArr = np.zeros_like(imgArr)
+    condition = np.logical_and(imgArr>n1, imgArr<n2)
+    retArr = np.where(condition, imgArr, zeroArr)
+    # inputArr[inputArr>=n1 and input<=n2] = inputArr
+    return retArr
+
+def rangeFilter(inputArr, n1, n2, value):
+    imgArr = np.array(inputArr, dtype=np.uint8)
+    zeroArr = np.zeros_like(imgArr)
+    condition = np.logical_and(imgArr>=n1, imgArr<=n2)
+    retArr = np.where(condition, imgArr, zeroArr)
+    retArr[retArr!=0]=value
+    # inputArr[inputArr>=n1 and input<=n2] = inputArr
+    return retArr
+
+def pointFilter(inputArr, n):
+    imgArr = np.array(inputArr, dtype=np.uint8)
+    imgArr[imgArr!=n]=0
+    return imgArr
+
+def get_segRaw(inputPath):
+    '''
+    arrObj is (n:slice, h:height, w:width), axis=1 compress to 2D image
+    '''
+    fObj = nib.load(inputPath)
+    tempArrObj = fObj.get_fdata()
+    tempArrObj = np.transpose(tempArrObj, (2,1,0))
+    arrObj = tempArrObj[::-1,::-1,::-1] #posterior view, if anterior view [::-1,::-1,::]
+    # arrOjb = np.max(arrObj, axis=1)
+    return arrObj
+
+def get_segData_cervical(inputPath): # not fuse cervical spines
+    '''
+    arrObj is (n:slice, h:height, w:width), axis=1 compress to 2D image
+    '''
+    fObj = nib.load(inputPath)
+    tempArrObj = fObj.get_fdata()
+    tempArrObj = np.transpose(tempArrObj, (2,1,0))
+    arrObj = tempArrObj[::-1,::-1,::-1] #posterior view, if anterior view [::-1,::-1,::]
+    labelSpines = {"C1":41, "C2":40, "C3":39, "C4":38, "C5":37, "C6":36, "C7":35, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
+    respectiveSpines = {}
+    for k, v in labelSpines.items():
+        tempArr = pointFilter(arrObj, v)
+        tempArr = np.max(tempArr,axis=1)
+        respectiveSpines[k]=tempArr
+    # arrOjb = np.max(arrObj, axis=1)
+    return arrObj
+
+def get_segData(inputPath):
+    '''
+    arrObj is (n:slice, h:height, w:width), axis=1 compress to 2D image
+    '''
+    fObj = nib.load(inputPath)
+    tempArrObj = fObj.get_fdata()
+    tempArrObj = np.transpose(tempArrObj, (2,1,0))
+    arrObj = tempArrObj[::-1,::-1,::-1] #posterior view, if anterior view [::-1,::-1,::]
+    labelSpines = {"Cervical":41, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
+    tempArrObj2 = rangeFilter(arrObj,35,41,41)
+    tempArrObj2 = np.max(tempArrObj2, axis=1)
+    respectiveSpines = {}
+    for k, v in labelSpines.items():
+        loopTempArr = pointFilter(arrObj, v)
+        loopTempArr = np.max(loopTempArr,axis=1)
+        respectiveSpines[k]=loopTempArr
+    # arrOjb = np.max(arrObj, axis=1)
+    respectiveSpines["Cervical"] = tempArrObj2
+    resultArr = respectiveSpines["Cervical"]
+    for k2, v2 in respectiveSpines.items():
+        resultArr[v2==labelSpines[k2]]=labelSpines[k2]
+    resultArr = resultArr+100
+    for i in range(17):
+        resultArr[resultArr==(134-i)]=i+2
+    resultArr[resultArr==141]=1
+    resultArr[resultArr==100]=0
+    return resultArr
+
+#labelSpines = {"C1":41, "C2":40, "C3":39, "C4":38, "C5":37, "C6":36, "C7":35, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
 
 if __name__ == "__main__":
     # a, b, c, d, e = ret_values_NM()
