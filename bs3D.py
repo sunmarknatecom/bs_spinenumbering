@@ -599,6 +599,21 @@ def get_segData(inputPath):
     resultArr[resultArr==100]=0
     return resultArr
 
+def resizeCT(inputPath):
+    fileListCT = sorted(os.listdir(inputPath))
+    outputPath = os.path.dirname(inputPath)+'/'+os.path.basename(os.path.dirname(inputPath))+"_RESIZED_CT"
+    os.mkdir(outputPath)
+    objName = os.path.basename(os.path.dirname(inputPath))
+    for fname in fileListCT:
+        temp_ds = pydicom.dcmread(inputPath+"/"+fname)
+        original_image = temp_ds.pixel_array
+        resized_image = cv2.resize(original_image, dsize=(256,256), interpolation=cv2.INTER_NEAREST)
+        new_ds = pydicom.dcmread(inputPath+"/"+fname)
+        new_ds.Rows = resized_image.shape[0]
+        new_ds.Columns = resized_image.shape[1]
+        new_ds.PixelSpacing = [temp_ds["PixelSpacing"].value[0]*2,temp_ds["PixelSpacing"].value[1]*2]
+        new_ds.PixelData = resized_image.tobytes()
+        new_ds.save_as(outputPath+"/"+'RES_'+objName+"_"+fname)
 #labelSpines = {"C1":41, "C2":40, "C3":39, "C4":38, "C5":37, "C6":36, "C7":35, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
 
 if __name__ == "__main__":
