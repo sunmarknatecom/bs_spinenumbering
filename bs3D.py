@@ -370,6 +370,85 @@ def inputList(a):
                 input_list.append([a[elem][elem1][elem2]["CT"], NMpath, mvppath])
     return input_list
 
+# for elem0 in pathL0:
+#     pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
+#     tempDictL1 = {}
+#     for elem1 in pathL1:
+#         pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
+#         tempDictL2 = {}
+#         for elem2 in pathL2:
+#             pathL3 = sorted(os.listdir(os.path.join(root,elem0,elem1,elem2)))
+#             tempDictL2[elem2] = pathL3
+#         tempDictL1[elem1] = tempDictL2
+#     dictFolders[elem0] = tempDictL1
+
+def getDictPath():
+    root = ".\\data\\"
+    pathL0 = sorted(os.listdir(root))
+    dictFolders = {}
+    for elem0 in pathL0:
+        pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
+        tempDictL1 = {}
+        for elem1 in pathL1:
+            pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
+            tempDictL1[elem1] = pathL2
+        dictFolders[elem0] = tempDictL1
+    return dictFolders
+
+def getListPath():
+    root = ".\\data\\"
+    pathL0 = sorted(os.listdir(root))
+    retPath = []
+    for elem0 in pathL0:
+        pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
+        for elem1 in pathL1:
+            pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
+            for elem2 in pathL2:
+                pathL3 = os.path.join(root,elem0,elem1,elem2)
+                retPath.append(pathL3)
+    return retPath
+
+def getModPath(inputList=None, subGroup=None):
+    '''
+    inputList is getListPath() result
+    getModPath(subgroup=None)
+    subgroup = "CT", "NM", "MVP"
+    '''
+    if inputList == None:
+        rootPath = getListPath()
+    else:
+        rootPath = inputList
+    retList = []
+    filterDict = {"CT":"CT_20", "NM":"TA_n","MVP":"MVP.P","RESCT":"RESCT","SEG":"SEG","NIFTICT":"NIFTICT"}
+    try:
+        if subGroup in filterDict.keys():
+            filter = filterDict[subGroup]
+        for elem0 in rootPath:
+            # idx = elem0.split("\\")[-1]
+            subFolders = os.listdir(elem0)
+            for elem1 in subFolders:
+                if filter in elem1:
+                    retPath = os.path.join(elem0,elem1)
+                    retList.append(retPath)
+        return retList
+    except:
+        print("subGroupError")
+    
+def getTuplePath():
+    pass
+
+
+                # for elem3 in temp2Path:
+                #     if "CT_20" in elem3:
+                #         temp3DictFolders["CT"]=temp2RootPath+elem3+"/"
+                #     elif "TA_n" in elem3:
+                #         temp3DictFolders["NM"]=temp2RootPath+elem3+"/"
+                #     elif "MVP.P" in elem3:
+                #         temp3DictFolders["MVP"]=temp2RootPath+elem3+"/"
+                #     elif "RES" in elem3:
+                #         temp3DictFolders["RES"]=temp2RootPath+elem3+"/"
+                #     else:
+                #         break
 
 def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM시작값                :",type(init_key), "   ", init_key)
