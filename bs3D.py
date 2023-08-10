@@ -4,6 +4,8 @@ import numpy as np
 import copy
 import nibabel as nib
 import cv2
+import dicom2nifti as d2n
+import shutil
 
 def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
@@ -397,6 +399,9 @@ def getDictPath():
     return dictFolders
 
 def getListPath():
+    '''
+    return to ".\\data\\2306\\230601\\230601\\"
+    '''
     root = ".\\data\\"
     pathL0 = sorted(os.listdir(root))
     retPath = []
@@ -450,6 +455,24 @@ def getTuplePath():
                 #         temp3DictFolders["RES"]=temp2RootPath+elem3+"/"
                 #     else:
                 #         break
+
+def createSubfolders(inputPath):
+    '''
+    inputPath is from getListPath()
+    '''
+    IDX = inputPath.split("\\")[-1]
+    os.mkdir(os.path.join(inputPath,IDX+"_resized_CT_dicom"))
+    os.mkdir(os.path.join(inputPath,IDX+"_resized_CT_nii"))
+    os.mkdir(os.path.join(inputPath,IDX+"_segData"))
+    os.mkdir(os.path.join(inputPath,IDX+"_inputData"))
+    os.mkdir(os.path.join(inputPath,IDX+"_labelData"))
+
+# def deleteSubfolders(inputPath):
+#     IDX = inputPath.split("\\")[-1]
+#     shutil.rmtree(os.path.join(inputPath,IDX+"_resized_segData"))
+#     shutil.rmtree(os.path.join(inputPath,IDX+"_resized_inputData"))
+#     shutil.rmtree(os.path.join(inputPath,IDX+"_resized_labelData"))
+
 
 def results(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM시작값                :",type(init_key), "   ", init_key)
@@ -601,21 +624,56 @@ def get_segData(inputPath):
     return resultArr
 
 def resizeCT(inputPath):
+    '''
+    inputPath is from getModPath(inputPath=getListPath, subGroup=CT)
+    inputPath ".\\data\\2306\\230601\\23060101\\ctpath"
+    os.path.dirname(inputPath) ".\\data\\2306\\230601\\23060101"
+    '''
+    IDX = inputPath.split("\\")[-2]
     fileListCT = sorted(os.listdir(inputPath))
-    outputPath = os.path.dirname(inputPath)+'/'+os.path.basename(os.path.dirname(inputPath))+"_RESIZED_CT"
-    os.mkdir(outputPath)
-    objName = os.path.basename(os.path.dirname(inputPath))
+    outputPath = os.path.join(os.path.dirname(inputPath),IDX+"_resized_CT_dicom")
+    # os.mkdir(outputPath)
     for fname in fileListCT:
-        temp_ds = pydicom.dcmread(inputPath+"/"+fname)
+        tempRootPath = os.path.join(inputPath,fname)
+        temp_ds = pydicom.dcmread(tempRootPath)
         original_image = temp_ds.pixel_array
         resized_image = cv2.resize(original_image, dsize=(256,256), interpolation=cv2.INTER_NEAREST)
-        new_ds = pydicom.dcmread(inputPath+"/"+fname)
+        new_ds = pydicom.dcmread(tempRootPath)
         new_ds.Rows = resized_image.shape[0]
         new_ds.Columns = resized_image.shape[1]
         new_ds.PixelSpacing = [temp_ds["PixelSpacing"].value[0]*2,temp_ds["PixelSpacing"].value[1]*2]
         new_ds.PixelData = resized_image.tobytes()
-        new_ds.save_as(outputPath+"/"+'RES_'+objName+"_"+fname)
+        new_ds.save_as(outputPath+"/RES_"+IDX+"_"+fname)
+    print("Success ",IDX)
 #labelSpines = {"C1":41, "C2":40, "C3":39, "C4":38, "C5":37, "C6":36, "C7":35, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
+
+def convert2nifti(inputPath):
+    '''
+    inputPath is from getListPath
+    inputPath ".\\data\\2306\\230601\\23060101"
+    os.path.dirname ".\\data\\2306\\230601\\"
+
+    '''
+    IDX = inputPath.split("\\")[-1]
+    tempInputPath = inputPath+"\\"+IDX+"_resized_CT_dicom"
+    outputPath = inputPath+'\\'+IDX+"_resized_CT_nii\\"
+    d2n.convert_directory(tempInputPath,outputPath)
+    filename = os.listdir(outputPath)[0]
+    os.rename(outputPath+"\\"+filename,outputPath+"\\"+IDX+"_resized_CT_nii.nii.gz")
+    print("Success", IDX)
+
+def fileCollect(inputPath):
+    '''
+    inputPath is from getListPath
+    inputPath ".\\data\\2306\\230601\\23060101"
+    os.path.dirname ".\\data\\2306\\230601\\"
+
+    '''
+    IDX = inputPath.split("\\")[-1]
+    srcPath = inputPath+"\\"+IDX+"_resized_CT_nii\\"
+    filename = os.listdir(srcPath)[0]
+    shutil.copyfile(srcPath+filename,".\\data\\CTnii\\"+filename)
+    print("Success ", filename)
 
 if __name__ == "__main__":
     # a, b, c, d, e = ret_values_NM()
@@ -623,6 +681,7 @@ if __name__ == "__main__":
     # print(a, b, c, d, e)
     errors = []
     inputPath = getSubFolders()
+
     input_list = inputList(inputPath)
     # def trying(input_list):
     #     try:
