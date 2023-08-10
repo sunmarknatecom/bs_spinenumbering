@@ -3,6 +3,7 @@ import pydicom
 import numpy as np
 import copy
 import nibabel as nib
+import cv2
 
 def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
