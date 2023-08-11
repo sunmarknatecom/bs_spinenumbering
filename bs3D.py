@@ -1,12 +1,19 @@
 import os
-import pydicom
-import numpy as np
 import copy
-import nibabel as nib
-import cv2
-import dicom2nifti as d2n
 import shutil
 
+import cv2
+import numpy as np
+
+import pydicom
+import nibabel as nib
+import dicom2nifti as d2n
+
+'''
+test
+'''
+
+# data manupulation
 def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     '''
     ctPath is folder name
@@ -137,6 +144,11 @@ def ret_values_NM(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
     # print(" init No: ", keyDiffMin, ", NM len: ", list(newDictLocNM.keys())[-1], ", CT len: ", len(dictLocCT) , ", Re NM len: ", len(newDictLocNM), list(skippedLocNM.keys()))
     return keyDiffMin, list(newDictLocNM.keys())[-1], len(dictLocCT) , len(newDictLocNM), list(skippedLocNM.keys())
     # 반환값 : (NM의 초기키값), (삭제될 NM key, value), (삭제된 NM 마지막 키값), (CT 길이), (NM길이)
+
+'''
+test222
+'''
+
 
 def CT3DObj(ctPath="./data/ct/"):
     '''
