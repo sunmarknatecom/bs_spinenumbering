@@ -27,7 +27,11 @@ Folder hierarchy: abbreviation y: year, m: month, d: day, i: index, L: level
 To Do (pipeline)
 -------------------------------------------------------------------------------
 STEP1: create four folders.
+        >> inputPath = getListPathL2()
+        >> createSubfolders(inputPath)
 STPE2: resize raw CT data.
+        >>
+        >> 
 STPE3: infer the segment from resized CT data.
 STEP4: transform 3D segment label data to 2D data.
 STPE5: modify MVP image with data from CT and NM data.
@@ -129,8 +133,6 @@ def getDictPathL3(inputPath=".\\data\\"):
                         temp3DictFolders["NM"]=temp2RootPath+elem3+"/"
                     elif "MVP.P" in elem3:
                         temp3DictFolders["MVP"]=temp2RootPath+elem3+"/"
-                    elif "RES" in elem3:
-                        temp3DictFolders["RES"]=temp2RootPath+elem3+"/"
                     else:
                         break
                 # example temp2DictFolders = {}
@@ -184,30 +186,14 @@ def getModPath(inputList=None, subGroup=None):
         return retList
     except:
         print("subGroupError")
-    
-def getTuplePath():
-    pass
-
-
-                # for elem3 in temp2Path:
-                #     if "CT_20" in elem3:
-                #         temp3DictFolders["CT"]=temp2RootPath+elem3+"/"
-                #     elif "TA_n" in elem3:
-                #         temp3DictFolders["NM"]=temp2RootPath+elem3+"/"
-                #     elif "MVP.P" in elem3:
-                #         temp3DictFolders["MVP"]=temp2RootPath+elem3+"/"
-                #     elif "RES" in elem3:
-                #         temp3DictFolders["RES"]=temp2RootPath+elem3+"/"
-                #     else:
-                #         break
 
 def createSubfolders(inputPath):
     '''
     inputPath is from getListPathL2()
     '''
     IDX = inputPath.split("\\")[-1]
-    os.mkdir(os.path.join(inputPath,IDX+"_resized_CT_dicom"))
-    os.mkdir(os.path.join(inputPath,IDX+"_resized_CT_nii"))
+    os.mkdir(os.path.join(inputPath,IDX+"_resizedCTdcm"))
+    os.mkdir(os.path.join(inputPath,IDX+"_resizedCTnii"))
     os.mkdir(os.path.join(inputPath,IDX+"_segData"))
     os.mkdir(os.path.join(inputPath,IDX+"_inputData"))
     os.mkdir(os.path.join(inputPath,IDX+"_labelData"))
@@ -219,14 +205,14 @@ def createSubfolders(inputPath):
 #     shutil.rmtree(os.path.join(inputPath,IDX+"_resized_labelData"))
 
 
-def results(init_key, last_key, len_CT, len_NM, skipped_dict):
+def showResults(init_key, last_key, len_CT, len_NM, skipped_dict):
     print("NM시작값                :",type(init_key), "   ", init_key)
     print("NM마지막 슬라이드번호   :",type(last_key), "  ",  last_key)
     print("CT 슬라이스 갯수        :",type(len_CT), "  ",  len_CT)
     print("NM 슬라이스 갯수        :",type(len_NM), "  ",  len_NM)
     print("삭제될 NM 슬라이드번호들 ",type(skipped_dict), " ",  skipped_dict)
 
-def CT3DObj(ctPath="./data/ct/"):
+def getObj3DCT(ctPath="./data/ct/"):
     '''
     CLASS> image processor
     ctPath is folder name
@@ -272,7 +258,7 @@ def CT3DObj(ctPath="./data/ct/"):
     # NM manupulation
     return CT3DImgObj
 
-def NM3DObj(nmPath="./data/nm/nm.dcm"):
+def getObj3DNM(nmPath="./data/nm/nm.dcm"):
     '''
     CLASS> image processor
     '''
@@ -282,11 +268,12 @@ def NM3DObj(nmPath="./data/nm/nm.dcm"):
     NM3DImgObj_transposed = np.transpose(NM3DImgObj, (1, 2, 0))
     return NM3DImgObj_transposed
 
-def mvpImgProc(ip=None, delSlices=None, needToApp=False, appNum=0, op=None):
+def procMVPImg(ip=None, delSlices=None, needToApp=False, appNum=0, op=None):
     '''
     CLASS> image processor
     ip = input path of mvp
     delSlices = slice location list to delete
+    needToApp : need to append (ex) nm size lower than CT 
     op = output path of mvp, save file format is numpy
     output path = one folder (ex: /data/result/inputData/)
     '''
@@ -629,7 +616,7 @@ def fileCollect(inputPath):
 
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
-    # results(a, b, c, d, e)
+    # showResults(a, b, c, d, e)
     # print(a, b, c, d, e)
     errors = []
     inputPath = getDictPathL3()
@@ -645,4 +632,4 @@ if __name__ == "__main__":
         result_len, listIdxSTR, reqAppend, defitNum, totalNumCT = slicesToRemove(ctp, nmp)
         # print((result_len+defitNum) == totalNumCT, result_len, (os.path.split(mvp))[0].split('/')[-2])
         # print("%4d"%i, "", (result_len+defitNum) == totalNumCT, result_len, ctp)
-        mvpImgProc(ip=mvp, delSlices=listIdxSTR,needToApp=reqAppend,appNum=defitNum)
+        procMVPImg(ip=mvp, delSlices=listIdxSTR,needToApp=reqAppend,appNum=defitNum)
