@@ -25,6 +25,7 @@ Folder hierarchy: abbreviation y: year, m: month, d: day, i: index, L: level
 .\L   \ L0 \ L1   \L2
 
 To Do (pipeline)
+-------------------------------------------------------------------------------
 STEP1: create four folders.
 STPE2: resize raw CT data.
 STPE3: infer the segment from resized CT data.
@@ -32,6 +33,19 @@ STEP4: transform 3D segment label data to 2D data.
 STPE5: modify MVP image with data from CT and NM data.
 STEP6: train the STEP4 data and STEP5 data with UNET.
 STEP7: evaluate and validate the model.
+-------------------------------------------------------------------------------
+
+Rule for folder names (IDX: index, ex. 2306010101 eight digits)
+-------------------------------------------------------------------------------
+1. raw CT folder : variable name, multiple file
+2. raw NM folder : variable name, single file
+3. raw MVP folder : variable name, single file
+
+4. resizedCT : IDX_resizedCTdcm, multiple file, respectively raw CT folder files.
+5. resizedCTnii : IDX_resizedCTnii, single file
+6. segData : IDX_segData, nii single file
+7. inputData: IDX_inputData, npy single file
+8. labelData: IDX_labelData, npy single file
 '''
 
 # data manupulation
@@ -78,7 +92,7 @@ def getListPathL2FromDict(inputDict):
                 retList.append([CTPath, NMPath, mvpPath])
     return retList
 
-def getDictPathL3():
+def getDictPathL3(inputPath=".\\data\\"):
     '''
     construct the file tree dictionary
     exam) {'2306':
@@ -88,7 +102,7 @@ def getDictPathL3():
            }
     '''
     dictFolders = {}
-    rootPath = "./data"
+    rootPath = inputPath
     listFolders = sorted(os.listdir(rootPath+"/")) #[(]'2306','2307']
     for elem in listFolders:
         tempRootPath = rootPath+"/"+elem+"/"
@@ -127,62 +141,11 @@ def getDictPathL3():
         dictFolders[elem] = temp1DictFolders
     return dictFolders
 
-def getRootPath():
-    '''
-    construct the file tree dictionary
-    exam) {'2306':
-                  {'230601':
-                            {'23060101':['ctpath','nmpath','mvppath']}
-                  }
-           }
-    '''
-    dictFolders = {}
-    rootPath = "./data"
-    listFolders = sorted(os.listdir(rootPath+"/")) #[(]'2306','2307']
-    for elem in listFolders:
-        tempRootPath = rootPath+"/"+elem+"/"
-        tempPath = sorted(os.listdir(tempRootPath)) # list obj
-        temp1DictFolders = {}
-        # example: dictFolders {'2306':{'230601': {'23060101':['ct','nm','mvp'], '23062902', '23062903', '23062904', '23062905', '23062906', '23062907', '23062908'], '230630': ['23063001', '23063002', '23063003', '23063004', '23063005', '23063006', '23063007']}}}
-        #                        elem    elem1      elem2      elem3
-        # to this, {'2306':[230601, 230602, ...]}, then dictFolders[elem] = [230601, 230602, ...]
-        for elem1 in tempPath:
-            temp1RootPath = rootPath+"/"+elem+"/"+elem1+"/"
-            temp1Path = sorted(os.listdir(temp1RootPath))
-            temp2DictFolders = {}
-            # example temp1DictFolders = {}
-            # temp1Path = "./data/230601/"
-            # temp1Folders = [23060101, 23060102, ...]
-            for elem2 in temp1Path:
-                temp2Path = rootPath+"/"+elem+"/"+elem1+"/"+elem2+"/"
-                temp2Folders = sorted(os.listdir(temp2Path))
-                temp2DictFolders[elem2] = temp2Folders
-                # example temp2DictFolders = {}
-                # temp2Path = "./data/230601/23060101/"
-                # temp2Folders = ['ct, 'nm', 'mvp']
-            temp1DictFolders[elem1] = temp2DictFolders
-        dictFolders[elem] = temp1DictFolders
-    return dictFolders
-
-
-
-# for elem0 in pathL0:
-#     pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
-#     tempDictL1 = {}
-#     for elem1 in pathL1:
-#         pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
-#         tempDictL2 = {}
-#         for elem2 in pathL2:
-#             pathL3 = sorted(os.listdir(os.path.join(root,elem0,elem1,elem2)))
-#             tempDictL2[elem2] = pathL3
-#         tempDictL1[elem1] = tempDictL2
-#     dictFolders[elem0] = tempDictL1
-
-def getDictPath(inputPath=".\\data\\"):
+def getDictPathL2(inputPath=".\\data\\"):
     '''
     CLASS> folder handler
     PARAMETERS> inputPath = ".\\data\\"
-    RETURN> dictionary of folders L3
+    RETURN> dictionary of folders L2
     '''
     root = inputPath
     pathL0 = sorted(os.listdir(root))
@@ -195,22 +158,6 @@ def getDictPath(inputPath=".\\data\\"):
             tempDictL1[elem1] = pathL2
         dictFolders[elem0] = tempDictL1
     return dictFolders
-
-def getListPath():
-    '''
-    return to ".\\data\\2306\\230601\\230601\\"
-    '''
-    root = ".\\data\\"
-    pathL0 = sorted(os.listdir(root))
-    retPath = []
-    for elem0 in pathL0:
-        pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
-        for elem1 in pathL1:
-            pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
-            for elem2 in pathL2:
-                pathL3 = os.path.join(root,elem0,elem1,elem2)
-                retPath.append(pathL3)
-    return retPath
 
 def getModPath(inputList=None, subGroup=None):
     '''
