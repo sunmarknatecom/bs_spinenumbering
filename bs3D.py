@@ -566,7 +566,7 @@ def resizeCT(inputPath):
     '''
     IDX = inputPath.split("\\")[-2]
     fileListCT = sorted(os.listdir(inputPath))
-    outputPath = os.path.join(os.path.dirname(inputPath),IDX+"_resized_CT_dicom")
+    outputPath = os.path.join(os.path.dirname(inputPath),IDX+"_resizedCTdcm")
     # os.mkdir(outputPath)
     for fname in fileListCT:
         tempRootPath = os.path.join(inputPath,fname)
