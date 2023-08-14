@@ -594,11 +594,11 @@ def cvt2nii(inputPath):
 
     '''
     IDX = inputPath.split("\\")[-1]
-    srcPath = inputPath+"\\"+IDX+"_resized_CT_dicom"
-    dstPath = inputPath+'\\'+IDX+"_resized_CT_nii\\"
+    srcPath = inputPath+"\\"+IDX+"_resizedCTdcm"
+    dstPath = inputPath+'\\'+IDX+"_resizedCTnii\\"
     d2n.convert_directory(srcPath,dstPath)
     filename = os.listdir(dstPath)[0]
-    os.rename(dstPath+"\\"+filename,dstPath+"\\"+IDX+"_resized_CT_nii.nii.gz")
+    os.rename(dstPath+"\\"+filename,dstPath+"\\"+IDX+"_resizedCTnii.nii.gz")
     print("Success", IDX)
 
 def fileCollect(inputPath):
