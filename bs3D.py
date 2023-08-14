@@ -9,6 +9,8 @@ import pydicom
 import nibabel as nib
 import dicom2nifti as d2n
 
+from totalsegmentator.python_api import totalsegmentator
+
 '''
 This code is for labelling of spines on bone scan by using bone SPECT/CT data
 training.
