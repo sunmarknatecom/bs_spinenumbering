@@ -610,7 +610,7 @@ def fileCollect(inputPath):
 
     '''
     IDX = inputPath.split("\\")[-1]
-    srcPath = inputPath+"\\"+IDX+"_resized_CT_nii\\"
+    srcPath = inputPath+"\\"+IDX+"_resizedCTnii\\"
     filename = os.listdir(srcPath)[0]
     shutil.copyfile(srcPath+filename,".\\data\\CTnii\\"+filename)
     print("Success ", filename)
