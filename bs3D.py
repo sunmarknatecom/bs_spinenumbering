@@ -33,7 +33,7 @@ STEP1: create four folders.
         >> for elem in inputPath:
                createSubfolders(elem)
 STPE2: resize raw CT data.
-        >>
+        >> 
         >> 
 STPE3: infer the segment from resized CT data.
 STEP4: transform 3D segment label data to 2D data.
@@ -175,7 +175,7 @@ def getModPath(inputList=None, subGroup=None):
     else:
         rootPath = inputList
     retList = []
-    filterDict = {"CT":"CT_20", "NM":"TA_n","MVP":"MVP.P","RESCT":"RESCT","SEG":"SEG","NIFTICT":"NIFTICT"}
+    filterDict = {"CT":"CT_20", "NM":"TA_n","MVP":"MVP.P","RESCT":"_resizedCTdcm","SEG":"_segData","NIFTICT":"resizedCTnii"}
     try:
         if subGroup in filterDict.keys():
             filter = filterDict[subGroup]
@@ -616,6 +616,11 @@ def fileCollect(inputPath):
     filename = os.listdir(srcPath)[0]
     shutil.copyfile(srcPath+filename,".\\data\\CTnii\\"+filename)
     print("Success ", filename)
+
+def loadNpzFile(src):
+    fObj = np.load(src)
+    npArr = fObj['arr_0']
+    return npArr
 
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
