@@ -28,7 +28,8 @@ To Do (pipeline)
 -------------------------------------------------------------------------------
 STEP1: create four folders.
         >> inputPath = getListPathL2()
-        >> createSubfolders(inputPath)
+        >> for elem in inputPath:
+               createSubfolders(elem)
 STPE2: resize raw CT data.
         >>
         >> 
