@@ -641,3 +641,9 @@ if __name__ == "__main__":
         # print((result_len+defitNum) == totalNumCT, result_len, (os.path.split(mvp))[0].split('/')[-2])
         # print("%4d"%i, "", (result_len+defitNum) == totalNumCT, result_len, ctp)
         procMVPImg(ip=mvp, delSlices=listIdxSTR,needToApp=reqAppend,appNum=defitNum)
+
+    # for i, elem in enumerate(fileList[num:]):
+    #     inputPath = rootPath + "/"+elem
+    #     outputPath = outRootPath+"/"+elem[:8]
+    #     totalsegmentator(inputPath, outputPath, fast=True, ml=True)
+    #     print("Processing ", (i+num), elem)
