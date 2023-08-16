@@ -29,9 +29,9 @@ Folder hierarchy: abbreviation y: year, m: month, d: day, i: index, L: level
 To Do (pipeline)
 -------------------------------------------------------------------------------
 STEP1: create four folders.
-        >> inputPath = getListPathL2()
+        >> inputPath = bs3D.getListPathL2()
         >> for elem in inputPath:
-               createSubfolders(elem)
+               bs3D.createSubfolders(elem)
 STPE2: resize raw CT data.
         >> 
         >> 
@@ -282,7 +282,7 @@ def procMVPImg(ip=None, delSlices=None, needToApp=False, appNum=0, op=None):
     '''
     fObj = pydicom.dcmread(ip)
     fArr = fObj.pixel_array[1]
-    fn = "./result/inputData/"+(os.path.split(ip))[0].split('/')[-2]
+    fn = ".\\result\\inputData\\"+(os.path.split(ip))[0].split('\\')[-2]
     if needToApp == False:
         saveNpy = np.delete(fArr,delSlices,axis=0)
     else:
@@ -421,7 +421,7 @@ def get_segData(inputPath):
     resultArr[resultArr==141]=1
     resultArr[resultArr==100]=0
     return resultArr
-def getTransformVar(ctPath="./data/ct/", nmPath="./data/nm/nm.dcm"):
+def getTransformVar(ctPath=".\\data\\ct\\", nmPath=".\\data\\nm\\nm.dcm"):
     '''
     CLASS>
     NAME>
