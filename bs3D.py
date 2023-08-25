@@ -40,7 +40,12 @@ STEP3: DICOM CT --> NIFTI CT
         >> for elem in inputPath:
         ....   bs3D.cvt2nii(elem)
 STPE3: infer the segment from resized CT data.
-        >> 
+        >> niiCTPaths = bs3D.getModPath(inputList=fileList, subGroup="NIFTICT")
+        >> for i, elem in enumerate(niiCTPaths):
+        ....   inputPath = elem+"\\"+os.listdir(elem)[0]
+               outputPath= elem[:-21]+"
+               totalsegmentator(inputPath, outputPath,fast=True,ml=True)
+               print("Processing  ", i+1, elem.split("\\")[-2])
 STEP4: transform 3D segment label data to 2D data.
 STPE5: modify MVP image with data from CT and NM data.
 STEP6: train the STEP4 data and STEP5 data with UNET.
