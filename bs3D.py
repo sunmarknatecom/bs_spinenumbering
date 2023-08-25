@@ -31,11 +31,16 @@ To Do (pipeline)
 STEP1: create four folders.
         >> inputPath = bs3D.getListPathL2()
         >> for elem in inputPath:
-               bs3D.createSubfolders(elem)
+        ....   bs3D.createSubfolders(elem)
 STPE2: resize raw CT data.
-        >> 
-        >> 
+        >> CTPaths = bs3D.getModPath(inputList=inputPath, subGroup="CT")
+        >> for elem in CTPaths:
+        ....   bs3D.resizeCT(elem)
+STEP3: DICOM CT --> NIFTI CT
+        >> for elem in inputPath:
+        ....   bs3D.cvt2nii(elem)
 STPE3: infer the segment from resized CT data.
+        >> 
 STEP4: transform 3D segment label data to 2D data.
 STPE5: modify MVP image with data from CT and NM data.
 STEP6: train the STEP4 data and STEP5 data with UNET.
@@ -61,6 +66,9 @@ Rule for folder names (IDX: index, ex. 2306010101 eight digits)
 # convert CT dicom file to NII file
 # inference of bone segmentation
 #
+
+# Categories of folders
+# Category 1 : folder handler [getListPathL2(), getListPathL2FromDict(), ]
 
 def getListPathL2(rootPath=".\\data\\"):
     '''
@@ -402,7 +410,7 @@ def get_segData(inputPath):
     tempArrObj = fObj.get_fdata()
     tempArrObj = np.transpose(tempArrObj, (2,1,0))
     arrObj = tempArrObj[::-1,::-1,::-1] #posterior view, if anterior view [::-1,::-1,::]
-    labelSpines = {"Cervical":41, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":20}
+    labelSpines = {"Cervical":41, "T1":34, "T2":33, "T3":32, "T4":31, "T5":30, "T6":29, "T7":28, "T8":27, "T9":26, "T10":25, "T11":24, "T12":23, "L1":22, "L2":21, "L3":20, "L4":19, "L5":18}
     tempArrObj2 = rangeFilter(arrObj,35,41,41)
     tempArrObj2 = np.max(tempArrObj2, axis=1)
     respectiveSpines = {}
@@ -621,6 +629,13 @@ def loadNpzFile(src):
     fObj = np.load(src)
     npArr = fObj['arr_0']
     return npArr
+
+def inferSegFromCT(filePath):
+    idx = filePath.split("\\")[-1]
+    inputPath = filePath+"\\"+idx+"_"
+    
+    pass
+
 
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
