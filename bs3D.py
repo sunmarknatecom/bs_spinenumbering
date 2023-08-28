@@ -641,6 +641,16 @@ def inferSegFromCT(filePath):
     
     pass
 
+def D3_D2_seg(paramIP):
+    '''
+    paramIP = from bs3D.getListPathL2()
+    '''
+    seg3DPath = getModPath(inputList=paramIP, subGroup="SEG")
+    tempFileList = []
+    for elem in seg3DPath:
+        temp_list = elem+"\\"+os.listdir(elem)[0]
+        temp_obj = get_segData(temp_list)
+        np.save(elem+elem.split("\\")[-2]+"_labelData", temp_obj)
 
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
