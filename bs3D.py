@@ -650,7 +650,7 @@ def D3_D2_seg(paramIP):
     for elem in seg3DPath:
         temp_list = elem+"\\"+os.listdir(elem)[0]
         temp_obj = get_segData(temp_list)
-        np.save(elem+elem.split("\\")[-2]+"_labelData", temp_obj)
+        np.save(elem[:-8]+"_labelData\\"+elem.split("\\")[-2]+"_labelData", temp_obj)
 
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
