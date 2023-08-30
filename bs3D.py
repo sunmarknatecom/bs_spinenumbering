@@ -33,20 +33,30 @@ STEP1: create four folders.
         >> for elem in inputPath:
         ....   bs3D.createSubfolders(elem)
 STPE2: resize raw CT data.
-        >> CTPaths = bs3D.getModPath(inputList=inputPath, subGroup="CT")
+        >> CTPaths = bs3D.getFolderList(rootPath=".\\data\\",subGroup=0)
         >> for elem in CTPaths:
         ....   bs3D.resizeCT(elem)
 STEP3: DICOM CT --> NIFTI CT
         >> for elem in inputPath:
         ....   bs3D.cvt2nii(elem)
 STPE3: infer the segment from resized CT data.
-        >> niiCTPaths = bs3D.getModPath(inputList=inputPath, subGroup="NIFTICT")
+        >> niiCTPaths = bs3D.getFolderList(inputPath=".\\data\\", subGroup=6)
         >> for i, elem in enumerate(niiCTPaths):
         ....   inputPath = elem+"\\"+os.listdir(elem)[0]
                outputPath= elem[:-21]+"
                totalsegmentator(inputPath, outputPath,fast=True,ml=True)
                print("Processing  ", i+1, elem.split("\\")[-2])
 STEP4: transform 3D segment label data to 2D data.
+        >> segDataPaths = sorted(bs3D.getFolderList(rootPath=".\\data\\", subGroup=7))
+        >> labelDataPaths = sorted(bs3D.getFolderList(rootPath=".\\data\\", subGroup=4))
+        >> if len(segDataPaths) == len(labelDataPaths):
+        ....   print("Ok!", len(segDataPaths))
+        >> for i in range(len(segDataPaths)):
+        ....   if os.path.dirname(segDataPaths[i]) == os.path.dirname(labelDataPaths[i]):
+        ....       print("OK!")
+        ....   else:
+        ....       print("OMG, error IDX", os.path.dirname(segDataPaths[i]))
+        >> for 
 STPE5: modify MVP image with data from CT and NM data.
 STEP6: train the STEP4 data and STEP5 data with UNET.
 STEP7: evaluate and validate the model.
@@ -78,6 +88,7 @@ Rule for folder names (IDX: index, ex. 2306010101 eight digits)
 def getFolderList(rootPath=".\\data\\",subGroup=0):
     '''
     FUNCTION: getFolderList
+    INPUTDATA TYPE: None
     PARAMS: rootPath=".\\data\\", subGroup=0
     subGroup=
     (0 --> raw CT data 512X512 sized (multiple files)
@@ -88,7 +99,10 @@ def getFolderList(rootPath=".\\data\\",subGroup=0):
      5 --> resizedCTdcm, 256X256 sized (multiple file, .dcm)
      6 --> resizedCTnii, 256X256 sized (one file, .nii.gz)
      7 --> segData, infered 3D label data (one file, .nii)
+    RETURN: list(dir_name) ex) [".\\data\\2304\\230403\\23040301\\23040301_CT"]
     '''
+    # try:
+    # subGroup = int(input("Type the subgroup 0:CT, 1:MVP, 2:NM, 3:inputData, 4:labelData,5:rCTdcm, 6:rCTnii, 7:segData\n"))
     subGroupList=["_CT_", ".MVP.Planar", ".TA_","inputData","labelData","resizedCTdcm","resizedCTnii","segData"]
     temp_list = os.walk(rootPath)
     temp_dir_names = []
@@ -98,11 +112,14 @@ def getFolderList(rootPath=".\\data\\",subGroup=0):
             temp_dir_names.append(dir_name)
             temp_file_names.append(file_name)
     return sorted(temp_dir_names)
+    # except:
+    #     print("Retry, enter the subGroup.!!!")
 
 def getIdxFolderList(rootPath=".\\data\\"):
     '''
     CLASS> folder handler
     NAME> getIdxFolderList()
+    INPUTDATA TYPE: None
     PARAMETERS> rootPath = ".\\data\\"
     RETURN>  [".\\data\\2306\\230601\\230601\\",
     '''
@@ -425,9 +442,22 @@ def get_segData_cervical(inputPath): # not fuse cervical spines
     # arrOjb = np.max(arrObj, axis=1)
     return arrObj
 
-def get_segData(inputPath):
+def transform3Dto2D(inputPath="\\data\\"):
     '''
+    paramIP = from bs3D.getIdxFolderList()
+    '''
+    seg3DPath = sorted(getFolderList(rootPath=inputPath, subGroup=7)) # ".\\~\\_segData"
+    labelDataPath = sorted(getFolderList(rootPath=inputPath, gubGroup=4)) # ".\\~\\_labelData"
+    for (segPath, labelPath) in zip(seg3DPath,labelDataPath):
+        temp_list = segPath+"\\"+os.listdir(segPath)[0]
+        temp_obj = cvtSegD2LabelD(temp_list)
+        np.save(labelPath+"\\"+labelPath.split("\\")[-2]+"_labelData", temp_obj)
+
+def cvtSegD2LabelD(inputPath):
+    '''
+    FUNCTION: get_segData(inputPath) only one path (".\\idx_segData\\)
     arrObj is (n:slice, h:height, w:width), axis=1 compress to 2D image
+    RETURN: 
     '''
     fObj = nib.load(inputPath)
     tempArrObj = fObj.get_fdata()
@@ -659,16 +689,6 @@ def inferSegFromCT(filePath):
     
     pass
 
-def D3_D2_seg(paramIP):
-    '''
-    paramIP = from bs3D.getIdxFolderList()
-    '''
-    seg3DPath = getModPath(inputList=paramIP, subGroup="SEG")
-    tempFileList = []
-    for elem in seg3DPath:
-        temp_list = elem+"\\"+os.listdir(elem)[0]
-        temp_obj = get_segData(temp_list)
-        np.save(elem[:-8]+"_labelData\\"+elem.split("\\")[-2]+"_labelData", temp_obj)
 
 def fileCopy():
     srcList = sorted(glob(".\\result\\inputData\\"))
