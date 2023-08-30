@@ -29,7 +29,7 @@ Folder hierarchy: abbreviation y: year, m: month, d: day, i: index, L: level
 To Do (pipeline)
 -------------------------------------------------------------------------------
 STEP1: create four folders.
-        >> inputPath = bs3D.getListPathL2()
+        >> inputPath = bs3D.getIdxFolderList()
         >> for elem in inputPath:
         ....   bs3D.createSubfolders(elem)
 STPE2: resize raw CT data.
@@ -40,7 +40,7 @@ STEP3: DICOM CT --> NIFTI CT
         >> for elem in inputPath:
         ....   bs3D.cvt2nii(elem)
 STPE3: infer the segment from resized CT data.
-        >> niiCTPaths = bs3D.getModPath(inputList=fileList, subGroup="NIFTICT")
+        >> niiCTPaths = bs3D.getModPath(inputList=inputPath, subGroup="NIFTICT")
         >> for i, elem in enumerate(niiCTPaths):
         ....   inputPath = elem+"\\"+os.listdir(elem)[0]
                outputPath= elem[:-21]+"
@@ -73,31 +73,49 @@ Rule for folder names (IDX: index, ex. 2306010101 eight digits)
 #
 
 # Categories of folders
-# Category 1 : folder handler [getListPathL2(), getListPathL2FromDict(), ]
+# Category 1 : folder handler [getIdxFolderList(), getIdxFolderListFromDict(), ]
 
-def getListPathL2(rootPath=".\\data\\"):
+def getFolderList(rootPath=".\\data\\",subGroup=0):
+    '''
+    FUNCTION: getFolderList
+    PARAMS: rootPath=".\\data\\", subGroup=0
+    subGroup=
+    (0 --> raw CT data 512X512 sized (multiple files)
+     1 --> MVP image (one file)
+     2 --> raw bone SPECT data (one file)
+     3 --> inputData, modified MVP image (one file, 2 images)
+     4 --> labelData, 2D segmented label image (one file)
+     5 --> resizedCTdcm, 256X256 sized (multiple file, .dcm)
+     6 --> resizedCTnii, 256X256 sized (one file, .nii.gz)
+     7 --> segData, infered 3D label data (one file, .nii)
+    '''
+    subGroupList=["_CT_", ".MVP.Planar", ".TA_","inputData","labelData","resizedCTdcm","resizedCTnii","segData"]
+    temp_list = os.walk(rootPath)
+    temp_dir_names = []
+    temp_file_names = []
+    for dir_name, _, file_name in temp_list:
+        if subGroupList[subGroup] in dir_name:
+            temp_dir_names.append(dir_name)
+            temp_file_names.append(file_name)
+    return sorted(temp_dir_names)
+
+def getIdxFolderList(rootPath=".\\data\\"):
     '''
     CLASS> folder handler
-    NAME> getListPathL2()
+    NAME> getIdxFolderList()
     PARAMETERS> rootPath = ".\\data\\"
     RETURN>  [".\\data\\2306\\230601\\230601\\",
     '''
-    root = rootPath
-    pathL0 = sorted(os.listdir(root))
-    retPath = []
-    for elem0 in pathL0:
-        pathL1 = sorted(os.listdir(os.path.join(root,elem0)))
-        for elem1 in pathL1:
-            pathL2 = sorted(os.listdir(os.path.join(root,elem0,elem1)))
-            for elem2 in pathL2:
-                pathL3 = os.path.join(root,elem0,elem1,elem2)
-                retPath.append(pathL3)
-    return retPath
+    temp_list = getFolderList(rootPath=rootPath)
+    return_Idx_folder_list = []
+    for elem in temp_list:
+        return_Idx_folder_list.append(os.path.dirname(elem))
+    return return_Idx_folder_list
 
-def getListPathL2FromDict(inputDict):
+def getIdxFolderListFromDict(inputDict):
     '''
     CLASS> folder handler
-    NAME> getListPathL2FromDict()
+    NAME> getIdxFolderListFromDict()
     PARAMETERS> inputDict
     RETURN> [CTPath, NMPath_file, mvpPath_file]
     usually inputDict from getSubFolder()
@@ -107,12 +125,12 @@ def getListPathL2FromDict(inputDict):
         for elem1 in inputDict[elem]:
             for elem2 in inputDict[elem][elem1]:
                 CTPath = inputDict[elem][elem1][elem2]["CT"]
-                NMPath = inputDict[elem][elem1][elem2]["NM"]+"/"+os.listdir(inputDict[elem][elem1][elem2]["NM"])[0]
-                mvpPath = inputDict[elem][elem1][elem2]["MVP"]+"/"+os.listdir(inputDict[elem][elem1][elem2]["MVP"])[0]
+                NMPath = inputDict[elem][elem1][elem2]["NM"]+"\\"+os.listdir(inputDict[elem][elem1][elem2]["NM"])[0]
+                mvpPath = inputDict[elem][elem1][elem2]["MVP"]+"\\"+os.listdir(inputDict[elem][elem1][elem2]["MVP"])[0]
                 retList.append([CTPath, NMPath, mvpPath])
     return retList
 
-def getDictPathL3(inputPath=".\\data\\"):
+def getDictPathL3(inputPath=".\\data"):
     '''
     construct the file tree dictionary
     exam) {'2306':
@@ -123,32 +141,32 @@ def getDictPathL3(inputPath=".\\data\\"):
     '''
     dictFolders = {}
     rootPath = inputPath
-    listFolders = sorted(os.listdir(rootPath+"/")) #[(]'2306','2307']
+    listFolders = sorted(os.listdir(rootPath+"\\")) #[(]'2306','2307']
     for elem in listFolders:
-        tempRootPath = rootPath+"/"+elem+"/"
+        tempRootPath = rootPath+"\\"+elem+"\\"
         tempPath = sorted(os.listdir(tempRootPath)) # list obj
         temp1DictFolders = {}
         # example: dictFolders {'2306':{'230601': {'23060101':['ct','nm','mvp'], '23062902', '23062903', '23062904', '23062905', '23062906', '23062907', '23062908'], '230630': ['23063001', '23063002', '23063003', '23063004', '23063005', '23063006', '23063007']}}}
         #                        elem    elem1      elem2      elem3
         # to this, {'2306':[230601, 230602, ...]}, then dictFolders[elem] = [230601, 230602, ...]
         for elem1 in tempPath:
-            temp1RootPath = tempRootPath+elem1+"/"
+            temp1RootPath = tempRootPath+elem1+"\\"
             temp1Path = sorted(os.listdir(temp1RootPath))
             temp2DictFolders = {}
             # example temp1DictFolders = {}
             # temp1Path = "./data/230601/"
             # temp1Folders = [23060101, 23060102, ...]
             for elem2 in temp1Path:
-                temp2RootPath = temp1RootPath+elem2+"/"
+                temp2RootPath = temp1RootPath+elem2+"\\"
                 temp2Path = sorted(os.listdir(temp2RootPath))
                 temp3DictFolders = {}
                 for elem3 in temp2Path:
                     if "CT_20" in elem3:
-                        temp3DictFolders["CT"]=temp2RootPath+elem3+"/"
+                        temp3DictFolders["CT"]=temp2RootPath+elem3+"\\"
                     elif "TA_n" in elem3:
-                        temp3DictFolders["NM"]=temp2RootPath+elem3+"/"
+                        temp3DictFolders["NM"]=temp2RootPath+elem3
                     elif "MVP.P" in elem3:
-                        temp3DictFolders["MVP"]=temp2RootPath+elem3+"/"
+                        temp3DictFolders["MVP"]=temp2RootPath+elem3
                     else:
                         break
                 # example temp2DictFolders = {}
@@ -179,12 +197,12 @@ def getDictPathL2(inputPath=".\\data\\"):
 
 def getModPath(inputList=None, subGroup=None):
     '''
-    inputList is getListPathL2() result
+    inputList is getIdxFolderList() result
     getModPath(subgroup=None)
     subgroup = "CT", "NM", "MVP"
     '''
     if inputList == None:
-        rootPath = getListPathL2()
+        rootPath = getIdxFolderList()
     else:
         rootPath = inputList
     retList = []
@@ -205,7 +223,7 @@ def getModPath(inputList=None, subGroup=None):
 
 def createSubfolders(inputPath):
     '''
-    inputPath is from getListPathL2()
+    inputPath is from getIdxFolderList()
     '''
     IDX = inputPath.split("\\")[-1]
     os.mkdir(os.path.join(inputPath,IDX+"_resizedCTdcm"))
@@ -575,7 +593,7 @@ def getTransformVar(ctPath=".\\data\\ct\\", nmPath=".\\data\\nm\\nm.dcm"):
 
 def resizeCT(inputPath):
     '''
-    inputPath is from getModPath(inputPath=getListPathL2, subGroup=CT)
+    inputPath is from getModPath(inputPath=getIdxFolderList, subGroup=CT)
     inputPath ".\\data\\2306\\230601\\23060101\\ctpath"
     os.path.dirname(inputPath) ".\\data\\2306\\230601\\23060101"
     '''
@@ -603,7 +621,7 @@ def resizeCT(inputPath):
 def cvt2nii(inputPath):
     '''
     CLASS> file handler
-    inputPath is from getListPathL2
+    inputPath is from getIdxFolderList
     inputPath ".\\data\\2306\\230601\\23060101"
     os.path.dirname ".\\data\\2306\\230601\\"
 
@@ -619,7 +637,7 @@ def cvt2nii(inputPath):
 def fileCollect(inputPath):
     '''
     CLASS> file handler
-    inputPath is from getListPathL2
+    inputPath is from getIdxFolderList
     inputPath ".\\data\\2306\\230601\\23060101"
     os.path.dirname ".\\data\\2306\\230601\\"
 
@@ -643,7 +661,7 @@ def inferSegFromCT(filePath):
 
 def D3_D2_seg(paramIP):
     '''
-    paramIP = from bs3D.getListPathL2()
+    paramIP = from bs3D.getIdxFolderList()
     '''
     seg3DPath = getModPath(inputList=paramIP, subGroup="SEG")
     tempFileList = []
@@ -652,6 +670,35 @@ def D3_D2_seg(paramIP):
         temp_obj = get_segData(temp_list)
         np.save(elem[:-8]+"_labelData\\"+elem.split("\\")[-2]+"_labelData", temp_obj)
 
+def fileCopy():
+    srcList = sorted(glob(".\\result\\inputData\\"))
+    # srcList[0]
+    # '.\\result\\inputData\\23050101.npz'
+    for elem in srcList:
+        temp_name = elem.split("\\")[-1]
+        targetPath = ".\\data\\"+temp_name[:4]+"\\"+temp_name[:6]+"\\"+temp_name[:8]+"\\"+temp_name[:8]+"_inputData\\"+temp_name[:8]+"_inputData.npz"
+        shutil.copy(elem,targetPath)
+
+def fileDelete():
+    srcList = sorted(glob(".\\result\\inputData\\"))
+    # srcList[0]
+    # '.\\result\\inputData\\23050101.npz'
+    for elem in srcList:
+        temp_name = elem.split("\\")[-1]
+        targetPath = ".\\data\\"+temp_name[:4]+"\\"+temp_name[:6]+"\\"+temp_name[:8]+"\\"+temp_name
+        os.remove(targetPath)
+    
+def fileRename():
+    srcList = sorted(glob(".\\result\\inputData\\"))
+    # srcList[0]
+    # '.\\result\\inputData\\23050101.npz'
+    for elem in srcList:
+        rootPath = '.\\result\\inputData\\'
+        temp_name = elem.split("\\")[-1][:-4]
+        srcName = elem
+        trgName = rootPath+temp_name+"_inputData.npz"
+        os.rename(srcName,trgName)
+
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
     # showResults(a, b, c, d, e)
@@ -659,7 +706,7 @@ if __name__ == "__main__":
     errors = []
     inputPath = getDictPathL3()
 
-    input_list = getListPathL2FromDict(inputPath)
+    input_list = getIdxFolderListFromDict(inputPath)
     # def trying(input_list):
     #     try:
     #         for ctpath, nmpath,_ in input_list:
