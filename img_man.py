@@ -90,6 +90,19 @@ def main2(root=".\\datat5\\"):
         np.save(".\\cropLabelData\\"+tempIndex+"_cropLabelData",cropLabelImg)
         np.save(".\\cropInputData\\"+tempIndex+"_cropInputData",cropInputImg)
 
+for i in range(num):
+    tempLabelObj = np.load(lbFiles[i])
+    tempInputObj = np.load(ipFiles[i])["arr_0"]
+    tempIdx = lbFiles[i].split("\\")[-1][:8]
+    tempX = tempCoord[i][1]
+    tempY = tempCoord[i][2]
+    cropLabelImg = tempLabelObj[tempY:tempY+300,tempX:tempX+80]
+    cropInputImg = tempInputObj[tempY:tempY+300,tempX:tempX+80]
+    # print(".\\cropLabelData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_clbD")
+    # print(".\\cropInputData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_cipD")
+    np.save(".\\cropLabelData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_clbD",cropLabelImg)
+    np.save(".\\cropInputData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_cipD",cropInputImg)
+
 if __name__ == "__main__":
     # fileList = bs3D.getFolderList(rootPath=".\\data5\\", subGroup=4)
     # for elem in fileList:
