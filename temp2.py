@@ -161,3 +161,58 @@ idxSTR = (np.array(slices_to_remove) - tNumNM)*(-1)
 outImg = np.delete(Img, idxSTR, axis=0)
 
 
+def getAreaCoord(paths):
+    '''
+    FUNCTION: get attribute and coordinate
+    INPUTDATA TYPE: path
+    PARAMS: rootPath=".\\data\\", subGroup=4
+    subGroup=
+    (0 --> raw CT data 512X512 sized (multiple files)
+     1 --> MVP image (one file)
+     2 --> raw bone SPECT data (one file)
+     3 --> inputData, modified MVP image (one file, 2 images)
+     4 --> labelData, 2D segmented label image (one file)
+     5 --> resizedCTdcm, 256X256 sized (multiple file, .dcm)
+     6 --> resizedCTnii, 256X256 sized (one file, .nii.gz)
+     7 --> segData, infered 3D label data (one file, .nii)
+    RETURN: cv2.contourArea(contours[idx]), y+int(h/2)-128
+    '''
+    tempObj = np.load(paths)
+    contours, h_ = cv2.findContours(tempObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    temp_arr = []
+    for elem in contours:
+        temp_va = cv2.contourArea(elem)
+        temp_arr.append(temp_va) 
+    temp_np = np.array(temp_arr)
+    idx = np.argmax(temp_np)
+    x, y, w, h = cv2.boundingRect(contours[idx])
+    # print(cv2.contourArea(contours[idx]), idx, x, y, w, h)
+    if x+int(w/2)-128 <= 0:
+        ret_x = 0
+    else:
+        ret_x = x+int(w/2)-128
+    return cv2.contourArea(contours[idx]), ret_x, y+int(h/2)-128
+
+lbFiles = sorted(glob(".\\labelData\\*.npy"))
+ipFiles = sorted(glob(".\\inputData\\*.npz"))
+
+tempCoord = []
+
+num = len(lbFiles)
+
+for i in range(num):
+    tempCoord.append(getAreaCoord(lbFiles[i]))
+
+for i in range(num):
+    tempLabelObj = np.load(lbFiles[i])
+    tempInputObj = np.load(ipFiles[i])["arr_0"]
+    tempInputObj = np.array(tempInputObj, dtype=np.uint16)
+    tempIdx = lbFiles[i].split("\\")[-1][:8]
+    tempX = tempCoord[i][1]
+    tempY = tempCoord[i][2]
+    cropLabelImg = tempLabelObj[tempY:tempY+256,...]
+    cropInputImg = tempInputObj[tempY:tempY+256,...]
+    # print(".\\cropLabelData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_clbD")
+    # print(".\\cropInputData\\"+tempIdx+"_%03d"%tempX+"_%03d"%tempY+"_cipD")
+    np.save(".\\cropLabelData2\\"+tempIdx+"_%03d"%tempY+"_clbD",cropLabelImg)
+    np.save(".\\cropInputData2\\"+tempIdx+"_%03d"%tempY+"_cipD",cropInputImg)
