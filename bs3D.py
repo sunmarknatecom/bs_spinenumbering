@@ -719,6 +719,14 @@ def fileRename():
         trgName = rootPath+temp_name+"_inputData.npz"
         os.rename(srcName,trgName)
 
+def print_error_list():
+    '''
+    inputPath['2304']['230404']['23040409']['CT'] = '.\\data\\2304\\230404\\23040409\\23040409_ANON99328_CT_2023-04-04_191622_Other_Bone_n716__00000\\'
+    inputPath['2304']['230404']['23040409']['MVP'] = '.\\data\\2304\\230404\\23040409\\23040409_ANON99328_NM_2023-04-04_191506_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.MVP.Planar_n2__00000'
+    inputPath['2304']['230404']['23040409']['NM'] = '.\\data\\2304\\230404\\23040409\\23040409_ANON99328_NM_2023-04-04_191506_Whole.Body.Bone.SCH_WBS6.FFS.MDP.OSAC.SCH1.TA_n758__00000'
+    '''
+    return 0
+
 if __name__ == "__main__":
     # a, b, c, d, e = getTransformVar()
     # showResults(a, b, c, d, e)
