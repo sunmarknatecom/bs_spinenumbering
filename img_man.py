@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 import bs3D
+import matplotlib.pyplot as plt
+import copy
 
 def crFileName(inPath):
     '''
@@ -89,6 +91,36 @@ def main2(root=".\\datat5\\"):
         cropInputImg = tempInputObj[tempY:tempY+300,tempX:tempX+80]
         np.save(".\\cropLabelData\\"+tempIndex+"_cropLabelData",cropLabelImg)
         np.save(".\\cropInputData\\"+tempIndex+"_cropInputData",cropInputImg)
+
+def view_fusion(num):
+    root = ".\\cropLabelData2\\"
+    fList = os.listdir(root)
+    root2 = ".\\cropInputData2\\"
+    fList2 = os.listdir(root2)
+    arrlbl = np.load(root+fList[num])
+    arrind = np.load(root2+fList2[num])
+    mask = copy.copy(arrlbl)
+    mask[arrlbl>=1]=1
+    outImg = mask*arrind
+    plt.imshow(outImg, cmap='gray_r')
+    plt.show()
+
+def shift_img(num, mask, inputData):
+    if num >= 0 and num < 256:
+        padding = np.zeros((256, num))
+        transmask = np.hstack([mask[...,num:],padding])
+        outimg = inputData*transmask
+        plt.imshow(outimg, cmap='gray_r')
+        plt.show()
+    elif num >=256:
+        print("ERROR, num is over 256.")
+    else:
+        absnum = abs(num)
+        padding = np.zeros((256, absnum))
+        transmask = np.hstack([padding, mask[...,:num]])
+        outimg = inputData*transmask
+        plt.imshow(outimg, cmap='gray_r')
+        plt.show()
 
 for i in range(num):
     tempLabelObj = np.load(lbFiles[i])
