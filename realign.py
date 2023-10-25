@@ -9,6 +9,10 @@ from glob import glob
 def fImgView(image, mask):
     tempMask = copy.copy(mask)
     tempMask[tempMask>=1]=1
+    height, width = np.shape(tempMask)
+    rHeight = 12
+    rWidth = 12 * width / height
+    plt.figure(figsize=(rWidth, rHeight))
     outImg = image*tempMask
     plt.imshow(outImg, cmap='gray_r')
     plt.show()
@@ -36,32 +40,40 @@ def shiftMask(num, mask):
 if __name__ == "__main__":
     inDataPaths = glob(".\\inputData\\*.npz")
     lbDataPaths = glob(".\\labelData\\*.npy")
-    sttNum = int(input("Start Number: "))
-    endNum = int(input("End   Number: "))
-    for i in range(sttNum, endNum):
+    print("Total object range is from 1 to 670.")
+    sttNum = int(input("What is start Number?  = "))
+    endNum = int(input("What is end number?    = "))
+    for i in range(sttNum-1, endNum):
         inImg = np.load(inDataPaths[i])["arr_0"]
         FNinImg = inDataPaths[i].split("\\")[-1]
         lbImg = np.load(lbDataPaths[i])
         FNlbImg = lbDataPaths[i].split("\\")[-1]
         IDX = FNinImg[:8]
-        print("Loading files, ",FNinImg, "and",FNlbImg)
+        print(i+1, ",  Loading index, ", IDX)
         fImgView(inImg, lbImg)
         continue_sign = True
         savePathLabel = ".\\modLabelData\\"
         while continue_sign == True:
-            selection = input("1: realignment, q: stop \n Select option? ")
+            selection = input("   \"1\": Realignment, \"z\": Exit, Any key: Next \n Select option? ")
             if selection == "1":
-                alignNum = int(input("Move number: neg(to left), pos(to right)"))
+                alignNum = int(input("        Move number: neg(to left), pos(to right) ? "))
                 tempMask = shiftMask(alignNum,lbImg)
                 fImgView(inImg,tempMask)
-                selection2 = input("Confirm the mask? 1: again")
+                selection2 = input("        Confirm the mask? \"1\": again, Any key: save and next ? ")
                 if selection2 == "1":
                     continue
+                elif selection == "z":
+                    print("GOOD BYE!!!")
+                    quit()
                 else:
                     np.save(savePathLabel+IDX+"_modLabel.npy",tempMask)
+                    print("Complete save", IDX+"_modLabel.npy\n----------------------------------------------")
                     continue_sign = False
-            elif selection == "q":
+            elif selection == "z":
+                print("GOOD BYE!!!")
                 quit()
             else:
                 np.save(savePathLabel+IDX+"_modLabel.npy",lbImg)
+                print("Complete save", IDX+"_modLabel.npy\n----------------------------------------------")
                 continue_sign = False
+    print("End of processing!!!")
