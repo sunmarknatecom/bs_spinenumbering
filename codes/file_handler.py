@@ -5,7 +5,7 @@ def get_folder_list(root_path=".\\data\\", sub_group=0):
     Get a list of folder paths containing specific sub-group names.
     
     Parameters:
-    root_path (str): The root directory to search for folders.
+    root_path (str): The root directory to search for folders. (".\\data\\")
     sub_group (int): The index of the sub-group to filter folders by.
 
     Returns:
@@ -26,7 +26,7 @@ def get_index_folder_list(root_path=".\\data\\"):
     Get a list of folder paths at the second level of the directory structure.
     
     Parameters:
-    root_path (str): The root directory to search for folders.
+    root_path (str): The root directory to search for folders.(".\\data\\")
 
     Returns:
     list: A list of directory paths.
@@ -62,7 +62,7 @@ def get_dict_path_l3(input_path=".\\data"):
     Get a nested dictionary of folder paths at three levels of the directory structure.
     
     Parameters:
-    input_path (str): The root directory to search for folders.
+    input_path (str): The root directory to search for folders.(".\\data\\")
 
     Returns:
     dict: A nested dictionary containing folder paths at three levels.
@@ -99,7 +99,7 @@ def get_dict_path_l2(input_path=".\\data\\"):
     Get a nested dictionary of folder paths at two levels of the directory structure.
     
     Parameters:
-    input_path (str): The root directory to search for folders.
+    input_path (str): The root directory to search for folders.(".\\data\\")
 
     Returns:
     dict: A nested dictionary containing folder paths at two levels.
