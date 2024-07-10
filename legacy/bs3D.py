@@ -380,7 +380,7 @@ def slicesToRemove(ctpath, nmpath):
         deficitNum = tNumCT - tNumNM + len(idxSTR)
         # print("CT > tempNM")
     temp_len = tNumNM-len(idxSTR)
-    outListSTR = list(idxSTR - 1)
+    outListSTR = [int(elem) for elem in (idxSTR - 1)]
     return temp_len, outListSTR, needToAppend, deficitNum, tNumCT
 
 def rangeFilter_not_to(inputArr, n1, n2):
